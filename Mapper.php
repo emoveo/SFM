@@ -720,9 +720,22 @@ abstract class SFM_Mapper
     	
     	if ($business instanceof SFM_Entity) {
             if (substr($fieldName, -3) == '_id') {
-           		$name = ucfirst(substr($fieldName, 0, -3));
+           		//$name = ucfirst(substr($fieldName, 0, -3));
+           		 //fixed by A-25
+                //mappers of field names with _ should have camelCase names
+                //for example, street_type_id => Mapper_StreetType
+				$name = substr($fieldName, 0, -3);
+				$nameParts = explode('_',$name);
            		
-           		$mapperClassName = 'Mapper_' . $name;
+           		
+           		foreach($nameParts as &$namePart)
+				{
+				        $namePart = ucfirst($namePart);
+				}
+				$name = implode('',$nameParts);
+				
+				$mapperClassName = 'Mapper_' . $name;
+                        
                 
                 require_once "Mapper/{$name}.Mapper.php";
                 
