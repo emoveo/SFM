@@ -84,6 +84,9 @@ abstract class SFM_Entity extends SFM_Business
      */
     public function update(array $params)
     {
+		if(empty($params))
+			return true;
+    	
     	//@TODO rewrite without clone
         $oldEntity = clone $this;
         foreach ($params as $key => $value) {

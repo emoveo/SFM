@@ -240,7 +240,7 @@ class SFM_Cache implements SFM_Interface_Singleton//, Interface_Cacher
         return ($value === false) ? null : $value;
     }
     
-    /**
+	/**
      * Wrapper over Memcached getMulti method
      * 
      * @param array $keys
@@ -252,10 +252,28 @@ class SFM_Cache implements SFM_Interface_Singleton//, Interface_Cacher
         {
             $key = $this->generateKey($key);
         }
-        $values = $this->driver->getMulti($keys);
+        /*$values = $this->driver->getMulti($keys);
+        return ($values === false) ? null : $values;*/
+        
+        
+        /*fixing strange multiget bug in debian */
+        
+    	$values = array();
+        foreach($keys as $key)
+        {
+        	$values[$key] = $this->driver->get($key);
+        }
+        foreach($values as $key1 => $value)
+        {
+        	if($value === false)
+        		unset($values[$key1]);
+        }
+        
+        if(empty($values))
+        	$values = false;
+        	
         return ($values === false) ? null : $values;
-    }
-    
+    }    
     /**
      * Wrapper over Cache delete method
      * 
