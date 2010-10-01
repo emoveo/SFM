@@ -84,10 +84,10 @@ abstract class SFM_Entity extends SFM_Business
      */
     public function update(array $params)
     {
-		if(empty($params))
-			return true;
-    	
     	//@TODO rewrite without clone
+    	if(empty($params))
+    		return true;
+    		
         $oldEntity = clone $this;
         foreach ($params as $key => $value) {
             //Check that field exists
@@ -95,6 +95,15 @@ abstract class SFM_Entity extends SFM_Business
                 //Prevent Entity from changing its id
                 if ($key != $this->mapper->getIdField()) {
                     $this->proto[$key] = $value;
+                }
+                
+                //if it is an some id-field...
+                if(strrpos($key,'_id') !== false) {
+	                //...and if there is a lazy-object loaded already...
+	                if (isset($this->computed[$key])) {
+	                	//...kill it. Goodbye!
+	                	unset($this->computed[$key]);
+	                }
                 }
             } else {
                 unset($params[$key]);
