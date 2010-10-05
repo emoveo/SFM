@@ -34,7 +34,6 @@ class SFM_DB implements SFM_Interface_Singleton
     */
     protected function __construct($connectionName)
     {
-        $config = Zend_Registry::get(Application::CONFIG_NAME);
         try {
             $config = Zend_Registry::get(Application::CONFIG_NAME);
 			$this->_db = Zend_Db::factory($config->database->main->driver,$config->database->main->params);
