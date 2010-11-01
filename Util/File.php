@@ -48,6 +48,12 @@ class SFM_Util_File
     static public function getExt($filename)
     {
 		$arr = explode(".", trim($filename, ". \r\n\t"));
-		return strtolower($arr[count($arr)-1]);
+		
+		//if the extension was found
+		if(count($arr) > 1)
+			return strtolower($arr[count($arr)-1]);
+		//else the filename contained no extension
+		else
+			return '';
     }
 }
