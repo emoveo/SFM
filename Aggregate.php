@@ -228,9 +228,11 @@ abstract class SFM_Aggregate extends SFM_Business implements Iterator, Countable
     	$this->loadEntitiesByIds($this->listEntityId);
     }
     
-    public function loadEntitiesForCurrentPage( $pageNum )
+    public function loadEntitiesForCurrentPage( $pageNum, $perPage = null)
     {
-    	$itpp = $this->getItemsPerPage();
+    	if($perPage === null)
+            $perPage = $this->getItemsPerPage();
+        $itpp = $perPage;
         --$pageNum;
         $ids = array_slice($this->getListEntitiesId(), $pageNum * $itpp, $itpp);
         $this->loadEntitiesByIds($ids);
