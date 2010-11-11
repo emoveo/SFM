@@ -54,6 +54,6 @@ class SFM_Util_File
 			return strtolower($arr[count($arr)-1]);
 		//else the filename contained no extension
 		else
-			return '';
+			return false;
     }
 }

@@ -6,9 +6,11 @@
  * @author Greg Ryzhov
  * @package Generic
  */
-class SFM_Util_Image {
+class SFM_Util_Image
+{
 
-    static public function scaleToSideSize($filename, $newSideSize) {
+    static public function scaleToSideSize($filename, $newSideSize)
+    {
         if (!SFM_Util_File::isImage($filename))
             return false;
 
@@ -36,7 +38,8 @@ class SFM_Util_Image {
         return true;
     }
 
-    static public function scaleToWidth($filename, $newWidth) {
+    static public function scaleToWidth($filename, $newWidth)
+    {
         if (!SFM_Util_File::isImage($filename))
             return false;
 
@@ -61,6 +64,49 @@ class SFM_Util_Image {
         imagedestroy($outImage);
         imagedestroy($sourceImage);
         return true;
+    }
+
+    static public function imScaleToWidth($filename, $newWidth)
+    {
+        list($width, $height) = getimagesize($filename);
+        if ($width <= $newWidth)
+            return;
+
+        $image = new Imagick($filename);
+
+        // If 0 is provided as a width or height parameter,
+        // aspect ratio is maintained
+        $image->thumbnailImage($newWidth, 0);
+
+        $image->writeImages($filename, true);
+    }
+
+    static public function imScaleToSideWithBorders($filename, $newSideSize)
+    {
+        list($width, $height) = getimagesize($filename);
+        // if ($width <= $newWidth) return;
+
+        $image = new Imagick($filename);
+
+        $fitbyWidth = (($newSideSize / $width) < ($newSideSize / $height)) ? true : false;
+
+        if ($fitbyWidth) {
+            if ($width <= $newSideSize)
+                return;
+            $image->thumbnailImage($newSideSize, 0, false);
+        } else {
+            if ($height <= $newSideSize)
+                return;
+            $image->thumbnailImage(0, $newSideSize, false);
+        }
+        $newDimentions = $image->getImageGeometry();
+
+        /* The overlay x and y coordinates */
+        $x = ( $newSideSize - $newDimentions['width'] ) / 2;
+        $y = ( $newSideSize - $newDimentions['height'] ) / 2;
+        $image->borderImage('white', $x, $y);
+
+        $image->writeImages($filename, true);
     }
 
 }
