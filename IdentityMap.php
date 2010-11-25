@@ -6,6 +6,7 @@
 class SFM_IdentityMap {
 
 	private static $map = array();
+	private static $enabled = true;
 	
 	/**
 	 * Saves Object
@@ -14,13 +15,15 @@ class SFM_IdentityMap {
 	 */
 	public static function addEntity(SFM_Entity $entity)
 	{
-		$className = get_class($entity);
-		if (!isset(self::$map[$className])) {
-			self::$map[$className] = array();
-		}
-		
-		if($entity->id !== null){
-			self::$map[$className][$entity->id] = $entity;
+		if(self::$enabled) {
+			$className = get_class($entity);
+			if (!isset(self::$map[$className])) {
+				self::$map[$className] = array();
+			}
+			
+			if($entity->id !== null){
+				self::$map[$className][$entity->id] = $entity;
+			}
 		}
 	}
 	
@@ -49,6 +52,16 @@ class SFM_IdentityMap {
 	{
 		$className = get_class($entity);
 		self::$map[$className][$entity->id] = null;
+	}
+	
+	public static function enable()
+	{
+		self::$enabled = true;
+	}
+	
+	public static function disable()
+	{
+		self::$enabled = false;
 	}
 }
 
