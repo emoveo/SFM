@@ -91,12 +91,10 @@ class SFM_Util_Image
         $fitbyWidth = (($newSideSize / $width) < ($newSideSize / $height)) ? true : false;
 
         if ($fitbyWidth) {
-            if ($width <= $newSideSize)
-                return;
+            if ($width > $newSideSize)
             $image->thumbnailImage($newSideSize, 0, false);
         } else {
-            if ($height <= $newSideSize)
-                return;
+            if ($height > $newSideSize)
             $image->thumbnailImage(0, $newSideSize, false);
         }
         $newDimentions = $image->getImageGeometry();
