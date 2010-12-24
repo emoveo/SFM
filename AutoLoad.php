@@ -10,6 +10,7 @@
 require_once 'SFM/Interface/Singleton.php';
 require_once 'SFM/AutoLoad/Rule/SFMFramework.php';
 require_once 'SFM/AutoLoad/Rule/SFMProject.php';
+require_once 'SFM/AutoLoad/Rule/SFMProjectExtra.php';
 require_once 'SFM/Exception/Autoload.php';; 
 
 
@@ -34,6 +35,7 @@ class SFM_AutoLoad implements SFM_Interface_Singleton
 
     	    self::$instance->addRule(new SFM_AutoLoad_Rule_SFMFramework());
     	    self::$instance->addRule(new SFM_Autoload_Rule_SFMProject());
+    	    self::$instance->addRule(new SFM_Autoload_Rule_SFMProjectExtra());
     	}
     	return self::$instance;
     }
