@@ -35,7 +35,6 @@ class SFM_AutoLoad implements SFM_Interface_Singleton
 
     	    self::$instance->addRule(new SFM_AutoLoad_Rule_SFMFramework());
     	    self::$instance->addRule(new SFM_Autoload_Rule_SFMProject());
-    	    self::$instance->addRule(new SFM_Autoload_Rule_SFMProjectExtra());
     	}
     	return self::$instance;
     }
