@@ -10,7 +10,6 @@
 require_once 'SFM/Interface/Singleton.php';
 require_once 'SFM/AutoLoad/Rule/SFMFramework.php';
 require_once 'SFM/AutoLoad/Rule/SFMProject.php';
-require_once 'SFM/AutoLoad/Rule/SFMProjectExtra.php';
 require_once 'SFM/Exception/Autoload.php';; 
 
 
