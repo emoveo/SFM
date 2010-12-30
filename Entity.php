@@ -113,6 +113,25 @@ abstract class SFM_Entity extends SFM_Business
         return $this->mapper->updateEntity($params, $this);
     }
     
+	/**
+     * Wrapper for update with transaction folding
+     * 
+     * @return bool True if update() success, false - if update failure or database exception
+     */
+    public function updateSafe(array $params)
+    {
+        $db = SFM_DB::getInstance();
+        try {
+            $db->beginTransaction();
+            $result = $this->update($params);
+            $db->commit();
+            return $result;
+        } catch(Zend_Db_Exception $e) {
+            $db->rollBack();
+            return false;
+        }
+    }
+    
     /**
      * Wrapper for mapper's deleteEntity method
      * 
@@ -121,6 +140,25 @@ abstract class SFM_Entity extends SFM_Business
     public function delete()
     {
         return $this->mapper->deleteEntity($this);
+    }
+    
+	/**
+     * Wrapper for delete with transaction folding
+     * 
+     * @return bool True if delete() success, false - if delete failure or database exception
+     */
+    public function deleteSafe()
+    {
+        $db = SFM_DB::getInstance();
+        try {
+            $db->beginTransaction();
+            $result = $this->delete();
+            $db->commit();
+            return $result;
+        } catch(Zend_Db_Exception $e) {
+            $db->rollBack();
+            return false;
+        }
     }
     
     public function __sleep()

@@ -741,7 +741,9 @@ abstract class SFM_Mapper
                 
                 if (class_exists($mapperClassName)) {
                     $mapper = new $mapperClassName;
-                    return $mapper->getEntityById($business->getInfo($fieldName));
+                    $fieldValue = $business->getInfo($fieldName);
+                    
+                    return $fieldValue !== null ? $mapper->getEntityById($fieldValue) : null;
                 } else {
                    throw new SFM_Exception_LazyLoad("{$mapperClassName} not found"); 
                 }

@@ -25,6 +25,12 @@ class SFM_DB implements SFM_Interface_Singleton
      * @var Zend_Db_Adapter_Abstract
      */
     protected $_db = null;
+    
+    /**
+     * Current transaction level
+     * @var integer
+     */
+    protected $_transactionLevel = 0;
 
     /**
     * Creates a new DB connection object and connect to the database
@@ -207,11 +213,18 @@ class SFM_DB implements SFM_Interface_Singleton
     }
     
     /**
-     * @return bool
+     * Starts a transaction. Returns if the transaction was started or no (if the transaction is nested).
+     * @return integer
      */
     public function beginTransaction()
     {
-        return $this->_db->beginTransaction();
+        if($this->_transactionLevel == 0) {
+            $this->_transactionLevel++;
+            $this->_db->beginTransaction();
+            return true;
+        } else {
+            return false;
+        }
     }
     
     /**
@@ -219,14 +232,30 @@ class SFM_DB implements SFM_Interface_Singleton
      */
     public function commit()
     {
-        return $this->_db->commit();
+        if($this->_transactionLevel < 0)
+            throw new SFM_Exception_DB('Commit without begin occured');
+        $this->_transactionLevel--;
+        if($this->_transactionLevel == 0) {
+            $this->_db->commit();
+            return true;
+        } else {
+            return false;
+        }
     }
     /**
+     * Rollback stops all transactions, including nested ones
      * @return bool
      */
     public function rollBack()
     {
-        return $this->_db->rollBack();
+        //only if any transaction is started and was not rollbacked
+        if($this->_transactionLevel != 0) {
+            $this->_transactionLevel = 0;
+            $this->_db->rollBack();
+            return true;
+        } else {
+            return false;
+        }
     }
     
     /**
