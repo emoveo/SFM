@@ -150,6 +150,16 @@ abstract class SFM_Aggregate extends SFM_Business implements Iterator, Countable
         return count($this->listEntityId);
     }
     
+    public function isEmpty()
+    {
+        $c = $this->totalCount();
+        if( 0 == $c ) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+    
     /**
      * Return array of entities
      */
