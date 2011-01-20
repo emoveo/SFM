@@ -98,7 +98,16 @@ abstract class SFM_Aggregate extends SFM_Business implements Iterator, Countable
      */
     public function next()
     {
-        return empty($this->entities) ? false : $this->entities[ next($this->loadedListEntityId) ];   
+        /*changed by A-25. It is more correct (no notices)*/
+        if(empty($this->entities))
+            return false;
+            
+        $next = next($this->loadedListEntityId);
+        if($next === false) 
+            return false;
+            
+        return $this->entities[$next];
+        /*return empty($this->entities) ? false : $this->entities[ next($this->loadedListEntityId) ];*/   
     }
 
     /**
