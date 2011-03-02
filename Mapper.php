@@ -141,24 +141,22 @@ abstract class SFM_Mapper
     }
     
     /**
-     * Get Entity by unique fileds.
+     * Get Entity by unique fields.
      * Note: You can use only two ways to guarantee single object is received:
      *  - getEntityById
-     *  - getEntityByUniqueFileds
+     *  - getEntityByUniqueFields
      * @see getEntityById
      * @param $params
      * @return SFM_Entity|null
      */
-    public function getEntityByUniqueFileds(array $params)
+    public function getEntityByUniqueFields(array $params)
     {
         if ( $this->hasUniqueFields() && ($params = $this->getOneUniqueFromParams($params)) ) {
             $cacheKey = $this->getEntityCacheKeyByUniqueVals( $this->getUniqueVals($params) );
             $entityId = SFM_Cache_Memory::getInstance()->get($cacheKey);
-//            var_dump($entityId);echo " -id<br>";
             if( null !== $entityId ) {
                 return $this->getEntityById( $entityId );
             }
-//            var_dump($entityId);
         } else {
             throw new SFM_Exception_Mapper("Unique fields aren't set");
         }
@@ -178,7 +176,16 @@ abstract class SFM_Mapper
         return $entity;
     }
     
-
+    
+    /**
+     * Wrapper. Thank the method's author for spelling mistakes!
+     * @param array $params
+     */
+    public function getEntityByUniqueFileds(array $params)
+    {
+        return $this->getEntityByUniqueFields($params);
+    }
+    
     
     /**
      * Returns key for storing entity in cache.
@@ -197,7 +204,7 @@ abstract class SFM_Mapper
     }
     /**
      * @param SFM_Entity $entity
-     * @param array $uniqueKey One of the keys. It must contain only filed names
+     * @param array $uniqueKey One of the keys. It must contain only field names
      * @return string
      * @throws SFM_Exception_Mapper
      */
@@ -211,6 +218,9 @@ abstract class SFM_Mapper
         	foreach ($uniqueKeyItem as $item) {
 	            $val = $entity->getInfo($item);
 	            if( null !== $val ) {
+	                if(is_string($val)) {
+	                    $val = mb_strtolower($val);
+	                }
 	                $uniqueVals[] = $val; 
 	            } else {
 	                throw new SFM_Exception_Mapper('Unknown field - '.$item);
@@ -230,7 +240,7 @@ abstract class SFM_Mapper
     {
     	$className = $this->entityClassName;
     	if(array_key_exists($this->idField, $proto)) {
-                $entity = $this->getEntityFromIdentityMap($className, $proto[$this->idField]);
+            $entity = $this->getEntityFromIdentityMap($className, $proto[$this->idField]);
         }
         if ($entity === null) {
         	$entity = new $className($proto, $this);
@@ -321,11 +331,11 @@ abstract class SFM_Mapper
         //@todo Delete tags, that are related only for this object (if we need to save memory space)
         $Cache->resetTags($entity->getCacheTags());
 	    if($this->hasUniqueFields()) {
-	             foreach ( $this->uniqueFields as $uniqueKey ) {
-	                 $key = $entity->getCacheKeyByUniqueFields($uniqueKey);
-	                 $Cache->delete( $key );
-	             }
-	        }
+             foreach ( $this->uniqueFields as $uniqueKey ) {
+                 $key = $entity->getCacheKeyByUniqueFields($uniqueKey);
+                 $Cache->delete( $key );
+             }
+        }
         
         //Then delete from DB
         $sql = "DELETE FROM {$this->tableName} WHERE {$this->idField}=:{$this->idField}";
@@ -536,6 +546,9 @@ abstract class SFM_Mapper
     {
     	$key = $this->entityClassName . SFM_Cache_Memory::KEY_DILIMITER;
         foreach ($values as $item) {
+            if(is_string($item)) {
+                $item = mb_strtolower($item);
+            }
             $key .= SFM_Cache_Memory::KEY_DILIMITER . $item;
         }
         return $key;

@@ -73,7 +73,12 @@ class SFM_Cache implements SFM_Interface_Singleton//, Interface_Cacher
         if (!is_array($arr)) {
             return null;
         }
-        return $this->getValidObject($arr);
+        $result = $this->getValidObject($arr);
+        if($result === null) {
+            //If the object is invalid, remove it from cache 
+            $this->delete($key);
+        }
+        return $result;
     }
     
     /**
@@ -167,13 +172,24 @@ class SFM_Cache implements SFM_Interface_Singleton//, Interface_Cacher
     {
         $keys = (array) $keys;
         $values = array();
+        $tagValues = array();
+        $tagKeys = array();
         foreach ($keys as $key) {
-            $tag = $this->getTagByKey($key);
-            $value = unserialize($this->_get($tag));
+            $tagKeys[] = $this->getTagByKey($key);
+        }
+        $tagValues = $this->_getMulti($tagKeys);
+        if($tagValues === null)
+            $tagValues = array();
+            
+        $i = 0;
+        foreach($tagValues as $tagValue) {
+            $key = $keys[$i];
+            $value = unserialize($tagValue);
             if ( false === $value) {
                 $value = $this->resetTags($key);
             }
             $values[$key] = $value;
+            $i++;
         }
         return $values;
     }
@@ -189,13 +205,15 @@ class SFM_Cache implements SFM_Interface_Singleton//, Interface_Cacher
     {
         $keys = (array) $keys;
         $values = array();
+        $tagValues = array();
         foreach ($keys as $key) {
             $tag = $this->getTagByKey($key);
             $values [$key]= $value = microtime(true);
-//            echo "<br><br>tags: ".$tag." <br>val:".$value;
-            $this->_set($tag, $value);
+            $tagValues[$tag] = serialize($value);
         }
-//        print_r(debug_backtrace());
+        if(!empty($tagValues)) {
+        	$this->_setMulti($tagValues);
+    	}
         return $values;
     }
     

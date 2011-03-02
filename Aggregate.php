@@ -287,8 +287,8 @@ abstract class SFM_Aggregate extends SFM_Business implements Iterator, Countable
             $tmp[ $newEntities[$i]->getId() ] = $i;
         }
 
-        foreach ($notLoaded as $id) {            
-            $entity = $newEntities[$tmp[$id]];
+        foreach ($notLoaded as $id) {      
+            $entity = isset($tmp[$id]) && isset($newEntities[$tmp[$id]]) ? $newEntities[$tmp[$id]] : null;
             if( isset( $entity ) ) {
                 $this->loadedListEntityId[] = $id;
                 $this->entities[$id] = $entity;
