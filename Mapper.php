@@ -180,6 +180,7 @@ abstract class SFM_Mapper
     /**
      * Wrapper. Thank the method's author for spelling mistakes!
      * @param array $params
+     * @deprecated
      */
     public function getEntityByUniqueFileds(array $params)
     {
