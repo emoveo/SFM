@@ -129,6 +129,8 @@ class SFM_Cache implements SFM_Interface_Singleton//, Interface_Cacher
         );        
         $this->_set($key, $arr, $expiration);
     }
+    
+    
     /**
      * Wrapper to SetMulti 
      * Existing tags aren't reseted  

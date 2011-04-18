@@ -35,4 +35,38 @@ class SFM_Cache_Memory extends SFM_Cache
         
         return self::$instance;
     }
+    
+    public function cas($key, $value, $tags=array(), $expiration=0)
+    {
+        do {
+            $resultValue = $this->driver->get($key, null, $cas);
+            if($this->driver->getResultCode() == Memcached::RES_NOTFOUND) {
+                $this->set($key, $value, $tags, $expiration);
+            } else {
+                //copypatse from SFM_Cache::set
+                $arr = array(
+                    self::KEY_VALUE => serialize($value),
+                    self::KEY_TAGS  => $this->getTags($tags),
+                );        
+                //\copypaste
+                $this->driver->cas($cas,$this->generateKey($key), $arr, $expiration);
+            }
+        } while ($this->driver->getResultCode() != Memcached::RES_SUCCESS);
+    }
+    
+    public function setRaw($key,$value,$expiration = 0)
+    {
+        $this->driver->set($key, $value, $expiration);
+    }
+    
+    public function getRaw($key)
+    {
+        $value = $this->driver->get($key);
+        return ($value === false) ? null : $value;
+    }
+    
+    public function deleteRaw($key)
+    {
+        return $this->driver->delete($key);
+    }
 }    
