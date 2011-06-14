@@ -56,17 +56,22 @@ class SFM_Cache_Memory extends SFM_Cache
     
     public function setRaw($key,$value,$expiration = 0)
     {
-        $this->driver->set($key, $value, $expiration);
+        return $this->driver->set($this->generateKey($key), $value, $expiration);
     }
     
     public function getRaw($key)
     {
-        $value = $this->driver->get($key);
+        $value = $this->driver->get($this->generateKey($key));
         return ($value === false) ? null : $value;
     }
     
     public function deleteRaw($key)
     {
         return $this->driver->delete($key);
+    }
+    
+    public function getResultCode()
+    {
+        return $this->driver->getResultCode();
     }
 }    
