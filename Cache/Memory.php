@@ -67,7 +67,7 @@ class SFM_Cache_Memory extends SFM_Cache
     
     public function deleteRaw($key)
     {
-        return $this->driver->delete($key);
+        return $this->driver->delete($this->generateKey($key));
     }
     
     public function getResultCode()

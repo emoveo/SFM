@@ -79,6 +79,11 @@ abstract class SFM_Mapper
         $this->aggregateCachePrefix = $this->aggregateClassName . SFM_Cache_Memory::KEY_DILIMITER;
     }
     
+    public function getTableName()
+    {
+        return $this->tableName;
+    }
+    
     /**
      * Returns name of field that is unique to every Entity.
      * Entity has no ability to change it
