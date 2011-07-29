@@ -123,7 +123,16 @@ abstract class SFM_Aggregate extends SFM_Business implements Iterator, Countable
      */
     public function current()
     {
-        return empty($this->loadedListEntityId) ? false : $this->entities[ current($this->loadedListEntityId) ];   
+        /*changed by A-25. It is more correct (no notices)*/
+        if(empty($this->entities))
+            return false;
+            
+        $current = current($this->loadedListEntityId);
+        if($current === false) 
+            return false;
+            
+        return $this->entities[$current];
+        //return empty($this->loadedListEntityId) ? false : $this->entities[ current($this->loadedListEntityId) ];   
     }
 
     /**
