@@ -293,6 +293,16 @@ abstract class SFM_Mapper
     }
     
     /**
+     * Updates Agregate in Cache
+     *
+     * @param SFM_Aggregate $aggregate
+     */
+    public function updateAggregate(SFM_Aggregate $aggregate)
+    {
+        $this->saveCached($aggregate);
+    }
+    
+    /**
      * Search in $newEntity new values of unique fields and update key if needed
      * 
      * @param SFM_Entity $newEntity

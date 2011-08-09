@@ -174,6 +174,7 @@ abstract class SFM_Aggregate extends SFM_Business implements Iterator, Countable
         array_push($this->entities, $entity);
         array_push($this->listEntityId, $entity->getId());
         array_push($this->loadedListEntityId, $entity->getId());
+        $this->mapper->updateAggregate($this);
     }
     
     public function unshift(SFM_Entity $entity)
@@ -181,6 +182,7 @@ abstract class SFM_Aggregate extends SFM_Business implements Iterator, Countable
         array_unshift($this->entities, $entity);
         array_unshift($this->listEntityId, $entity->getId());
         array_unshift($this->loadedListEntityId, $entity->getId());
+        $this->mapper->updateAggregate($this);
     }
     
     /**
