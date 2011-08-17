@@ -65,6 +65,16 @@ class SFM_Cache_Memory extends SFM_Cache
         return ($value === false) ? null : $value;
     }
     
+    public function incrementRaw($key)
+    {
+        return $this->driver->increment($this->generateKey($key));
+    }
+
+    public function decrementRaw($key)
+    {
+        return $this->driver->decrement($this->generateKey($key));
+    }
+    
     public function deleteRaw($key)
     {
         return $this->driver->delete($this->generateKey($key));

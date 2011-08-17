@@ -620,6 +620,22 @@ abstract class SFM_Mapper
     	return $cacheKey;
     }
     
+	/**
+     * Generate cache key basing on parent and child entity. Aggregate is replaced by concrete child id.
+     * @param SFM_Aggregate|array $entityList
+     * @param $prefix Use it if you need different cache keys for same parent entity
+     * @return string
+     */
+    public function getAggregateCacheKeyByEntities($entityList, $prefix = '')
+    {
+        $cacheKey = '';
+        foreach($entityList as $entity){
+            $cacheKey.= $this->getAggregateCacheKeyByParentEntity($entity).SFM_Cache_Memory::KEY_DILIMITER;
+        }
+    	//$cacheKey = $this->getAggregateCacheKeyByParentEntity($parent,$child->getId()).SFM_Cache_Memory::KEY_DILIMITER.$prefix;
+    	return $cacheKey.$prefix;
+    }
+    
    /**
      * @param array $params
      * @return SFM_Entity
