@@ -598,7 +598,7 @@ abstract class SFM_Mapper
     public function getAggregateCacheKeyByParentEntity(SFM_Entity $entity=null, $prefix='')
     {
         $cacheKey = $this->aggregateCachePrefix;
-        if( !empty($prefix) ) {
+        if( $prefix !== '' ) {
             $cacheKey .= $prefix . SFM_Cache_Memory::KEY_DILIMITER;
         }
         if( null != $entity ) {
