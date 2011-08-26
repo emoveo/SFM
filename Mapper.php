@@ -740,14 +740,16 @@ abstract class SFM_Mapper
     protected function saveCached(SFM_Business $object)
     {
         $cacheKey = $object->getCacheKey();
-        $tags = $object->getCacheTags();
-        
-        $Cache = SFM_Cache_Memory::getInstance();
-        //reset only for entities
-        if($object instanceof SFM_Entity) {
-            $Cache->resetTags($tags); 
+        if($cacheKey !== null){
+            $tags = $object->getCacheTags();
+            
+            $Cache = SFM_Cache_Memory::getInstance();
+            //reset only for entities
+            if($object instanceof SFM_Entity) {
+                $Cache->resetTags($tags); 
+            }
+            $Cache->set($cacheKey, $object, $tags);
         }
-        $Cache->set($cacheKey, $object, $tags);
     }
     
     /**
