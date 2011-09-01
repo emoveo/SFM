@@ -771,21 +771,29 @@ abstract class SFM_Mapper
            		 //fixed by A-25
                 //mappers of field names with _ should have camelCase names
                 //for example, street_type_id => Mapper_StreetType
+                //or street_type_id => Mapper_Street_Type
 				$name = substr($fieldName, 0, -3);
 				$nameParts = explode('_',$name);
            		
            		
            		foreach($nameParts as &$namePart)
 				{
-				        $namePart = ucfirst($namePart);
+			        $namePart = ucfirst($namePart);
 				}
-				$name = implode('',$nameParts);
 				
-				$mapperClassName = 'Mapper_' . $name;
-                        
-                
-                require_once "Mapper/{$name}.Mapper.php";
-                
+				
+				$name = implode('',$nameParts);
+				$mapperClassName1Variant = 'Mapper_' . $name;
+				$mapperClassName2Variant = 'Mapper_' . implode('_',$nameParts);
+				try {
+			        if(class_exists($mapperClassName1Variant)){
+			            $mapperClassName = $mapperClassName1Variant;
+			        }
+				} catch(SFM_Exception_Autoload $e){
+				    //simply it was variant2
+				    $mapperClassName = $mapperClassName2Variant;
+				}
+				
                 if (class_exists($mapperClassName)) {
                     $mapper = new $mapperClassName;
                     $fieldValue = $business->getInfo($fieldName);

@@ -474,4 +474,20 @@ abstract class SFM_Aggregate extends SFM_Business implements Iterator, Countable
 
         return $result;
     }
+    
+    /**
+     * Combines several aggregates to one.
+     * @param SFM_Mapper $mapper
+     * @param array of SFM_Aggregate $aggregates
+     * @param string|null $cacheKey 
+     */
+    public static function combine(SFM_Mapper $mapper,array $aggregates,$cacheKey = null)
+    {
+        $entityIds = array();
+        foreach($aggregates as $aggregate){
+            $entityIds = array_merge($entityIds,$aggregate->getListEntitiesId());
+        }
+        $aggregate = $mapper->createAggregate($entityIds,$cacheKey);
+        return $aggregate; 
+    }
 }
