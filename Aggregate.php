@@ -491,4 +491,18 @@ abstract class SFM_Aggregate extends SFM_Business implements Iterator, Countable
         $aggregate = $mapper->createAggregate($entityIds,$cacheKey);
         return $aggregate; 
     }
+    
+    /**
+     * Returns if the entity exists in aggregate
+     * @param SFM_Entity $entity
+     * @param boolean $onlyLoaded If true, entity is searched only in loaded entities
+     */
+    public function entityExists(SFM_Entity $entity, $onlyLoaded = false)
+    {
+        $exists = in_array($entity->getId(), $this->getListEntitiesId());
+        if($onlyLoaded && $exists){
+            $exists = isset($this->entities[$entity->getId()]);
+        }
+        return $exists;
+    }
 }
