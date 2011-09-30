@@ -200,10 +200,10 @@ class SFM_DB implements SFM_Interface_Singleton
      *
      */
     
-    public function insert($sql, $vars, $tableName = null, $idFieldName = 'id',$idIsAutoincrement = true)
+    public function insert($sql, $vars, $tableName = null, $idFieldName = 'id',$isIdAutoincrement = true)
     {
         $stmt = $this->query($sql, $vars);
-        if($idIsAutoincrement){
+        if($isIdAutoincrement){
             return $this->_db->lastInsertId($tableName,$idFieldName);    
         } else {
             return $vars[$idFieldName];

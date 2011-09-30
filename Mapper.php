@@ -367,7 +367,7 @@ abstract class SFM_Mapper
      */
     public function insertEntity($proto)
     {
-        if($this->idIsAutoIncrement()){
+        if($this->isIdAutoIncrement()){
             unset($proto[$this->idField]);
         }
         //$inserts = array();
@@ -384,7 +384,7 @@ abstract class SFM_Mapper
              . SFM_DB::getInstance()->quoteIdentifier($this->tableName, true)
              . ' (' . implode(', ', $keys) . ') '
              . 'VALUES (' . implode(', ', $values) . ')';
-        return $this->getEntityById( SFM_DB::getInstance()->insert($sql, $proto, $this->tableName,$this->idField,$this->idIsAutoIncrement()) );        
+        return $this->getEntityById( SFM_DB::getInstance()->insert($sql, $proto, $this->tableName,$this->idField,$this->isIdAutoIncrement()) );        
     }
     
     /**
@@ -895,7 +895,7 @@ abstract class SFM_Mapper
         }
     }
     
-    public function idIsAutoIncrement()
+    public function isIdAutoIncrement()
     {
         return true;
     }
