@@ -499,10 +499,27 @@ abstract class SFM_Aggregate extends SFM_Business implements Iterator, Countable
      */
     public function entityExists(SFM_Entity $entity, $onlyLoaded = false)
     {
+        $index = $this->getEntityIndex($entity,$onlyLoaded);
+        return $index !== null;
+    }
+    
+	/**
+     * Returns entity index
+     * @param SFM_Entity $entity
+     * @param boolean $onlyLoaded If true, entity is searched only in loaded entities
+     * 
+     * @return integer
+     */
+    public function getEntityIndex(SFM_Entity $entity, $onlyLoaded = false)
+    {
         $exists = in_array($entity->getId(), $this->getListEntitiesId());
-        if($onlyLoaded && $exists){
-            $exists = isset($this->entities[$entity->getId()]);
+        if(!$exists){
+            return null;
         }
-        return $exists;
+        if($onlyLoaded && !isset($this->entities[$entity->getId()])){
+            return null;
+        }
+            
+        return array_search($entity->getId(), $this->getListEntitiesId());
     }
 }
