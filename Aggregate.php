@@ -61,6 +61,7 @@ abstract class SFM_Aggregate extends SFM_Business implements Iterator, Countable
         $this->cacheKey = $cacheKey;
 
         $this->entities = array();
+        
         foreach ($proto as $v) {
             if (!is_array($v) || (is_array($v) && !$loadEntities && array_key_exists($this->mapper->getIdField(), $v))) {
                 $id = null;
@@ -201,10 +202,6 @@ abstract class SFM_Aggregate extends SFM_Business implements Iterator, Countable
     {
         return $this->entities;
     }
-    /* public function getProto()
-      {
-      return $this->proto instanceof SFM_Aggregate ? $this->proto->getProto() : $this->proto;
-      } */
 
     /**
      * Returns key in Cache for this Aggregate

@@ -451,15 +451,20 @@ abstract class SFM_Mapper
         if ($cacheKey !== null) {
             $aggregate = SFM_Cache_Memory::getInstance()->get($cacheKey);
             if ($aggregate !== null) {
+                if( $loadEntities ) {
+                    $aggregate->loadEntities();
+                }
                 return $aggregate;
             }
         }
         $db = SFM_DB::getInstance();
         $aggregate = $this->createAggregate( $db->fetchAll($sql, $params), $cacheKey, $loadEntities );
-        
         //If key for Cache exists, store to Caching
         if ($cacheKey !== null && $aggregate !== null) {
             $this->saveCached($aggregate);
+            if( $loadEntities ) {
+                $this->saveListOfEntitiesInCache($aggregate->getContent());
+            }
         }
         
         return $aggregate;
@@ -476,6 +481,10 @@ abstract class SFM_Mapper
      */
     public function getLoadedAggregateBySQL($sql, array $params = array(), $cacheKey=null)
     {
+        $tmp = strtolower( str_replace(' ', '', $sql) );
+        if( false === strpos($tmp, 'select*')) {
+            throw new Exception('You must use "SELECT * FROM" to load aggregate');
+        }
     	return $this->getAggregateBySQL($sql, $params, $cacheKey, true);
     }
     
