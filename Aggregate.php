@@ -55,14 +55,14 @@ abstract class SFM_Aggregate extends SFM_Business implements Iterator, Countable
      * @param Mapper $Mapper            Mapper Object (Factory for creation of objects with help of prototype)
      * @throws SFM_Excetion_Aggregate
      */
-    public function __construct(array $proto, SFM_Mapper $mapper, $cacheKey=null)
+    public function __construct(array $proto, SFM_Mapper $mapper, $cacheKey=null, $loadEntities=false)
     {
         $this->mapper = $mapper;
         $this->cacheKey = $cacheKey;
 
         $this->entities = array();
         foreach ($proto as $v) {
-            if (!is_array($v) || (is_array($v) && (sizeof($v) == 1) && array_key_exists($this->mapper->getIdField(), $v))) {
+            if (!is_array($v) || (is_array($v) && !$loadEntities && array_key_exists($this->mapper->getIdField(), $v))) {
                 $id = null;
                 if (is_array($v)) {
                     $id = $v[$this->mapper->getIdField()];

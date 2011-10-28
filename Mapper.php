@@ -251,7 +251,7 @@ abstract class SFM_Mapper
         if ($entity === null) {
         	$entity = new $className($proto, $this);
             
-            //SFM_IdentityMap::addEntity($entity);
+            SFM_IdentityMap::addEntity($entity);
         }
         return $entity;
     }
@@ -395,10 +395,10 @@ abstract class SFM_Mapper
      * @param string $cacheKey
      * @return SFM_Aggregate must be overrided in childs 
      */
-    public function createAggregate(array $proto, $cacheKey=null)
+    public function createAggregate(array $proto, $cacheKey=null, $loadEntities=false)
     {
     	$className = $this->aggregateClassName;
-        return new $className($proto, $this, $cacheKey);
+        return new $className($proto, $this, $cacheKey, $loadEntities);
     }
     
     /**
@@ -442,9 +442,10 @@ abstract class SFM_Mapper
      * @param string $sql
      * @param array $params
      * @param string $cacheKey
+     * @param bool $loadEntities
      * @return SFM_Aggregate
      */
-    public function getAggregateBySQL($sql, array $params = array(), $cacheKey=null)
+    public function getAggregateBySQL($sql, array $params = array(), $cacheKey=null, $loadEntities=false)
     {
     	//If there is a key for Cache, look to Cache
         if ($cacheKey !== null) {
@@ -454,7 +455,7 @@ abstract class SFM_Mapper
             }
         }
         $db = SFM_DB::getInstance();
-        $aggregate = $this->createAggregate( $db->fetchAll($sql, $params), $cacheKey );
+        $aggregate = $this->createAggregate( $db->fetchAll($sql, $params), $cacheKey, $loadEntities );
         
         //If key for Cache exists, store to Caching
         if ($cacheKey !== null && $aggregate !== null) {
@@ -462,6 +463,20 @@ abstract class SFM_Mapper
         }
         
         return $aggregate;
+    }
+    
+    /**
+     * Wrapper for getAggregateBySql with load all Entities
+     * @see getAggregateBySql
+     * 
+     * @param string $sql
+     * @param array $params
+     * @param string $cacheKey
+     * @return SFM_Aggregate
+     */
+    public function getLoadedAggregateBySQL($sql, array $params = array(), $cacheKey=null)
+    {
+    	return $this->getAggregateBySQL($sql, $params, $cacheKey, true);
     }
     
     /**
