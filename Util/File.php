@@ -47,13 +47,7 @@ class SFM_Util_File
 
     static public function getExt($filename)
     {
-		$arr = explode(".", trim($filename, ". \r\n\t"));
-		
-		//if the extension was found
-		if(count($arr) > 1)
-			return strtolower($arr[count($arr)-1]);
-		//else the filename contained no extension
-		else
-			return false;
+		$path_parts = pathinfo($filename);
+		return isset($path_parts['extension']) ? $path_parts['extension'] : false;
     }
 }
