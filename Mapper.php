@@ -424,7 +424,7 @@ abstract class SFM_Mapper
         
         //Look to DB
         $proto = $this->fetchArrayFromDB($params);
-        $aggregate = $this->createAggregate($proto, $cacheKey);
+        $aggregate = $this->createAggregate($proto, $cacheKey, true);
         
         //If key for Cache exists, store to Caching
         if ($cacheKey !== null && $aggregate !== null) {
