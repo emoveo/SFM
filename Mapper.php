@@ -482,7 +482,7 @@ abstract class SFM_Mapper
     public function getLoadedAggregateBySQL($sql, array $params = array(), $cacheKey=null)
     {
         $tmp = strtolower( str_replace(' ', '', $sql) );
-        if( false === strpos($tmp, 'select*')) {
+        if( !preg_match('/select([^.]*)(\.{0,1})\*/', $tmp)) {
             throw new Exception('You must use "SELECT * FROM" to load aggregate');
         }
     	return $this->getAggregateBySQL($sql, $params, $cacheKey, true);
