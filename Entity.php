@@ -128,7 +128,7 @@ abstract class SFM_Entity extends SFM_Business
             return $result;
         } catch(Zend_Db_Exception $e) {
             $db->rollBack();
-            return false;
+            throw $e;
         }
     }
     
@@ -157,7 +157,7 @@ abstract class SFM_Entity extends SFM_Business
             return $result;
         } catch(Zend_Db_Exception $e) {
             $db->rollBack();
-            return false;
+            throw $e;
         }
     }
     
