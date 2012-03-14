@@ -193,7 +193,9 @@ abstract class SFM_Aggregate extends SFM_Business implements Iterator, Countable
         $entityKey = array_search($entity, $this->entities);
         if ($entityKey !== false) {
             array_splice($this->entities, $entityKey, 1);
-            $entityIdKey = array_search($entity->getId(), $this->listEntityId);
+        }
+        $entityIdKey = array_search($entity->getId(), $this->listEntityId);
+        if($entityIdKey !== false) {
             array_splice($this->listEntityId, $entityIdKey, 1);
         }
         $entityLoadedKey = array_search($entity->getId(), $this->loadedListEntityId);
