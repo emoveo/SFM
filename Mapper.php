@@ -443,9 +443,10 @@ abstract class SFM_Mapper
      * @param array $params
      * @param string $cacheKey
      * @param bool $loadEntities
+     * @param integer $expiration
      * @return SFM_Aggregate
      */
-    public function getAggregateBySQL($sql, array $params = array(), $cacheKey=null, $loadEntities=false)
+    public function getAggregateBySQL($sql, array $params = array(), $cacheKey=null, $loadEntities=false, $expiration = 0)
     {
     	//If there is a key for Cache, look to Cache
         if ($cacheKey !== null) {
@@ -459,6 +460,9 @@ abstract class SFM_Mapper
         }
         $db = SFM_DB::getInstance();
         $aggregate = $this->createAggregate( $db->fetchAll($sql, $params), $cacheKey, $loadEntities );
+        if($expiration){
+            $aggregate->setExpires($expiration);
+        }
         //If key for Cache exists, store to Caching
         if ($cacheKey !== null && $aggregate !== null) {
             $this->saveCached($aggregate);
@@ -477,15 +481,16 @@ abstract class SFM_Mapper
      * @param string $sql
      * @param array $params
      * @param string $cacheKey
+     * @param integer $expiration
      * @return SFM_Aggregate
      */
-    public function getLoadedAggregateBySQL($sql, array $params = array(), $cacheKey=null)
+    public function getLoadedAggregateBySQL($sql, array $params = array(), $cacheKey=null, $expiration = 0)
     {
         $tmp = strtolower( str_replace(' ', '', $sql) );
         if( !preg_match('/select([^.]*)(\.{0,1})\*/', $tmp)) {
             throw new Exception('You must use "SELECT * FROM" to load aggregate');
         }
-    	return $this->getAggregateBySQL($sql, $params, $cacheKey, true);
+    	return $this->getAggregateBySQL($sql, $params, $cacheKey, true, $expiration);
     }
     
     /**
@@ -774,7 +779,7 @@ abstract class SFM_Mapper
             if($object instanceof SFM_Entity) {
                 $Cache->resetTags($tags); 
             }
-            $Cache->set($cacheKey, $object, $tags);
+            $Cache->set($cacheKey, $object, $tags, $object->getExpires());
         }
     }
     

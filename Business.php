@@ -20,6 +20,14 @@ abstract class SFM_Business
     protected $computed = array();
     
     /**
+     * Indicates whether business object should be treated as expire object.
+     * Such objects don't expire because of tags and expire only for time.
+     * In seconds.
+     * @var integer
+     */
+    protected $_expires = 0;
+    
+    /**
      * Returns key for storing in Cache.
      * 
      */
@@ -58,4 +66,13 @@ abstract class SFM_Business
         }
     }
 
+    public function setExpires($expires)
+    {
+        $this->_expires = $expires;
+    }
+    
+    public function getExpires()
+    {
+        return $this->_expires;
+    }
 }

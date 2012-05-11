@@ -12,6 +12,7 @@ class SFM_Cache implements SFM_Interface_Singleton//, Interface_Cacher
     
     const KEY_VALUE = 'value';
     const KEY_TAGS  = 'tags';
+    const KEY_EXPIRES  = 'expires';
     
     /**
      *
@@ -126,6 +127,7 @@ class SFM_Cache implements SFM_Interface_Singleton//, Interface_Cacher
         $arr = array(
             self::KEY_VALUE => serialize($value),
             self::KEY_TAGS  => $this->getTags($tags),
+            self::KEY_EXPIRES  => $expiration,
         );        
         $this->_set($key, $arr, $expiration);
     }
@@ -145,6 +147,7 @@ class SFM_Cache implements SFM_Interface_Singleton//, Interface_Cacher
             $arr[$businessObj->getCacheKey()] = serialize( array(
                 self::KEY_VALUE => serialize($businessObj),
                 self::KEY_TAGS  => $this->getTags($businessObj->getCacheTags()),
+                self::KEY_EXPIRES  => $businessObj->getExpires(),
             ) );     
         }        
 //        var_dump($arr);
@@ -314,7 +317,8 @@ class SFM_Cache implements SFM_Interface_Singleton//, Interface_Cacher
         
         $newTagValues = $this->getTags(array_keys($oldTagValues));
 //        echo "<br><br>Get by key :<br>";var_dump($value);echo "<br>";var_dump($oldTagValues);var_dump($newTagValues); echo "<br><br>";
-        if($oldTagValues == $newTagValues) {
+        //expiration objects should expire without tags
+        if($oldTagValues == $newTagValues || $raw[self::KEY_EXPIRES]) {
             /**
              * unserialize ONLY after tags comparison to except useless work
              * @see SFM_Aggregate __wakeup
