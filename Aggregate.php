@@ -63,7 +63,7 @@ abstract class SFM_Aggregate extends SFM_Business implements Iterator, Countable
         $this->entities = array();
         
         foreach ($proto as $v) {
-            if (!is_array($v) || (is_array($v) && !$loadEntities && array_key_exists($this->mapper->getIdField(), $v))) {
+            if (!is_array($v) || array_key_exists($this->mapper->getIdField(), $v)) {
                 $id = null;
                 if (is_array($v)) {
                     $id = $v[$this->mapper->getIdField()];
@@ -77,6 +77,10 @@ abstract class SFM_Aggregate extends SFM_Business implements Iterator, Countable
                 $this->entities[$entity->getId()] = $entity;
                 $this->loadedListEntityId[] = $entity->getId();
             }
+        }
+        
+        if($loadEntities && !$this->isAllEntitiesLoaded()){
+            $this->loadEntities();
         }
     }
 
