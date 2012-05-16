@@ -414,25 +414,15 @@ abstract class SFM_Mapper
     public function getAggregate(array $params = array(), $cacheKey=null)
     {
         //If there is a key for Cache, look to Cache
-        if ($cacheKey !== null) {
-            $aggregate = SFM_Cache_Memory::getInstance()->get($cacheKey);
+        $aggregate = $this->getCachedAggregate($cacheKey,false); 
+        if($aggregate === null){
+            //Look to DB
+            $proto = $this->fetchArrayFromDB($params);
+            $aggregate = $this->createAggregate($proto, $cacheKey, true);
             
-            if ($aggregate !== null) {
-                return $aggregate;
-            }
+            $this->saveCachedAggregate($aggregate,false,0);
         }
-        
-        //Look to DB
-        $proto = $this->fetchArrayFromDB($params);
-        $aggregate = $this->createAggregate($proto, $cacheKey, true);
-        
-        //If key for Cache exists, store to Caching
-        if ($cacheKey !== null && $aggregate !== null) {
-            $this->saveCached($aggregate);
-        }
-        
-        return $aggregate;
-        
+        return $aggregate;        
     }
     
     /**
@@ -448,7 +438,37 @@ abstract class SFM_Mapper
      */
     public function getAggregateBySQL($sql, array $params = array(), $cacheKey=null, $loadEntities=false, $expiration = 0)
     {
-    	//If there is a key for Cache, look to Cache
+        $aggregate = $this->getCachedAggregate($cacheKey,$loadEntities);
+        if($aggregate === null){
+            $db = SFM_DB::getInstance();
+            $aggregate = $this->createAggregate( $db->fetchAll($sql, $params), $cacheKey, $loadEntities );
+            $this->saveCachedAggregate($aggregate,$loadEntities,$expiration);
+        }
+        return $aggregate;
+    }
+    
+	/**
+     * The same as getAggregate, but by array of ids
+     * @see getAggregate
+     * 
+     * @param array $ids
+     * @param string $cacheKey
+     * @param bool $loadEntities
+     * @param integer $expiration
+     * @return SFM_Aggregate
+     */
+    public function getAggregateByIds(array $ids = array(), $cacheKey=null, $loadEntities=false, $expiration = 0)
+    {
+        $aggregate = $this->getCachedAggregate($cacheKey,$loadEntities);
+        if($aggregate === null){
+            $aggregate = $this->createAggregate( $ids, $cacheKey, $loadEntities );
+            $this->saveCachedAggregate($aggregate,$loadEntities,$expiration);
+            return $aggregate;
+        }
+    }
+    
+    protected function getCachedAggregate($cacheKey,$loadEntities)
+    {
         if ($cacheKey !== null) {
             $aggregate = SFM_Cache_Memory::getInstance()->get($cacheKey);
             if ($aggregate !== null) {
@@ -458,20 +478,21 @@ abstract class SFM_Mapper
                 return $aggregate;
             }
         }
-        $db = SFM_DB::getInstance();
-        $aggregate = $this->createAggregate( $db->fetchAll($sql, $params), $cacheKey, $loadEntities );
+        return null;
+    }
+    
+    protected function saveCachedAggregate(SFM_Aggregate $aggregate,$loadEntities,$expiration)
+    {
         if($expiration){
             $aggregate->setExpires($expiration);
         }
         //If key for Cache exists, store to Caching
-        if ($cacheKey !== null && $aggregate !== null) {
+        if ($aggregate->getCacheKey() !== null && $aggregate !== null) {
             $this->saveCached($aggregate);
             if( $loadEntities ) {
                 $this->saveListOfEntitiesInCache($aggregate->getContent());
             }
         }
-        
-        return $aggregate;
     }
     
     /**
