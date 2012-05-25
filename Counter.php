@@ -1,6 +1,4 @@
 <?php
-require_once 'SFM/Cache/Memory.php';
-require_once 'SFM/Value.php';
 
 /**
  * Simplify common operations on counters
@@ -14,20 +12,25 @@ abstract class SFM_Counter extends SFM_Value
     {
         $val = SFM_Cache_Memory::getInstance()->incrementRaw($this->getCacheKey());
         if( false === $val ) {
-            $this->value = $this->load();
-            ++$this->value;
-            SFM_Cache_Memory::getInstance()->set($this->getCacheKey(), $this->value);
+            $val= $this->load();
+            ++$val;
+            $this->set($val);
+        } else {
+            $this->value = $val;
         }
-        
+        return $this->value;
     }
     
     public  function decrement()
     {
         $val = SFM_Cache_Memory::getInstance()->decrementRaw($this->getCacheKey());
         if( false === $val ) {
-            $this->value = $this->load();
-            --$this->value;
-            SFM_Cache_Memory::getInstance()->set($this->getCacheKey(), $this->value);
+            $val= $this->load();
+            --$val;
+            $this->set($val);
+        } else {
+            $this->value = $val;
         }
+        return $this->value;
     }
 }

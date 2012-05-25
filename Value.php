@@ -1,5 +1,4 @@
 <?php
-require_once 'SFM/Cache/Memory.php';
 
 /**
  * Simplify common operations on counters
@@ -9,25 +8,28 @@ require_once 'SFM/Cache/Memory.php';
 abstract class SFM_Value
 {
     protected $value;
-    
+       
     public function get()
     {
         if( !isset($this->value) ) {
-            $value = SFM_Cache_Memory::getInstance()->get($this->getCacheKey());
+            $value = SFM_Cache_Memory::getInstance()->getRaw($this->getCacheKey());
+//            var_dump($value);
             if( null !== $value ) {
                 $this->value = $value;
             } else {
                 $this->value = $this->load();
-                SFM_Cache_Memory::getInstance()->set($this->getCacheKey(), $this->value);
+                
+                SFM_Cache_Memory::getInstance()->setRaw($this->getCacheKey(), $this->value);
             }
         }
         return $this->value;
     }
     
-    public function set( $value )
+    public function set( $value, $expiration=0 )
     {
         $this->value = $value;
-        SFM_Cache_Memory::getInstance()->set($this->getCacheKey(), $this->value);
+        SFM_Cache_Memory::getInstance()->setRaw($this->getCacheKey(), $this->value, $expiration);
+        return $this->value;
     }
 
     
