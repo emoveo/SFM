@@ -13,6 +13,13 @@ abstract class SFM_Entity extends SFM_Business
     protected $proto;
     
     /**
+     *
+     * @var SFM_Mapper
+     */
+    protected $mapper;
+
+
+    /**
      * Constructor
      * @param array $proto Prototype array (contains information about Business object)
      */

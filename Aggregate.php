@@ -47,6 +47,12 @@ abstract class SFM_Aggregate extends SFM_Business implements Iterator, Countable
      * @var string
      */
     protected $cacheKey;
+    
+    /**
+     *
+     * @var SFM_Mapper
+     */
+    protected $mapper;
 
     /**
      * Constructor

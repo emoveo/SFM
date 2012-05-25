@@ -18,7 +18,7 @@ abstract class SFM_Business
      * @var array
      */
     protected $computed = array();
-    
+        
     /**
      * Indicates whether business object should be treated as expire object.
      * Such objects don't expire because of tags and expire only for time.
