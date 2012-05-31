@@ -4,7 +4,7 @@ require_once 'SFM/Cache/Dummy.php';
 require_once 'SFM/Exception/Memcached.php';
 
 /**
- *  Class for work with daemons that use memcache protocol. Implements tags system for cache control
+ *  Class for work with daemons that use memcache protocol. Implements tags system for cache control 
  */
 class SFM_Cache implements SFM_Interface_Singleton//, Interface_Cacher 
 {
@@ -29,6 +29,12 @@ class SFM_Cache implements SFM_Interface_Singleton//, Interface_Cacher
     
     protected $projectPrefix = '';
     
+    /**
+     * @var SFM_Cache_Transaction 
+     */
+    protected $transaction;
+
+
     protected function __construct($host, $port, $projectPrefix = '', $disable = false)
     {
         //check fake mode
@@ -46,6 +52,8 @@ class SFM_Cache implements SFM_Interface_Singleton//, Interface_Cacher
             if($disable !=1 ) 
                 $this->driver->setOption(Memcached::OPT_COMPRESSION, true);
         }       
+        
+        $this->transaction = new SFM_Cache_Transaction($this->driver);
     }
     
     /**
@@ -115,21 +123,22 @@ class SFM_Cache implements SFM_Interface_Singleton//, Interface_Cacher
     /**
      * Save value to cache
      * 
-     * @param string $key
-     * @param mixed $value
-     * @param array $tags
-     * @param int $expiration
-     * 
+     * @param SFM_Business $value
      */
-    public function set($key, $value, $tags=array(), $expiration=0)
+    public function set(SFM_Business $value)
     {
-//        echo "<br><br>SET - ".$key."<br>";var_dump($value);echo "<br>";var_dump($tags);echo "<br>";var_dump($this->getTags($tags));
         $arr = array(
             self::KEY_VALUE => serialize($value),
-            self::KEY_TAGS  => $this->getTags($tags),
-            self::KEY_EXPIRES  => $expiration,
-        );        
-        $this->_set($key, $arr, $expiration);
+            self::KEY_TAGS  => $this->getTags($value->getCacheTags()),
+            self::KEY_EXPIRES  => $value->getExpires(),
+        );       
+        
+        if( !$this->transaction->isStarted() ) {
+            $this->_set($value->getCacheKey(), $arr, $value->getExpires());
+        } else {
+            $this->transaction->log($value);
+        }
+        
     }
     
     
@@ -147,11 +156,14 @@ class SFM_Cache implements SFM_Interface_Singleton//, Interface_Cacher
             $arr[$businessObj->getCacheKey()] = serialize( array(
                 self::KEY_VALUE => serialize($businessObj),
                 self::KEY_TAGS  => $this->getTags($businessObj->getCacheTags()),
-                self::KEY_EXPIRES  => $businessObj->getExpires(),
+                self::KEY_EXPIRES  => $expiration,
             ) );     
         }        
-//        var_dump($arr);
-        $this->_setMulti($arr, $expiration);
+        if( !$this->transaction->isStarted() ) {
+            $this->_setMulti($arr, $expiration);
+        } else {
+            $this->transaction->logMulti($items, $expiration);
+        }
     }
     
     /**
@@ -232,7 +244,9 @@ class SFM_Cache implements SFM_Interface_Singleton//, Interface_Cacher
     protected function _set($key, $value, $expiration=0)
     {
         $value = serialize($value);
-        $this->driver->set($this->generateKey($key), $value, $expiration);
+        $key = $this->generateKey($key);
+        $this->driver->set($key, $value, $expiration);
+        
     }
     
     /**
@@ -246,7 +260,8 @@ class SFM_Cache implements SFM_Interface_Singleton//, Interface_Cacher
         $resultItems = array();
         foreach($items as $key => $value)
         {
-            $resultItems[$this->generateKey($key)] = $value;
+            $key = $this->generateKey($key);
+            $resultItems[$key] = $value;
         }
         $this->driver->setMulti($resultItems, $expiration);
     }
@@ -336,5 +351,19 @@ class SFM_Cache implements SFM_Interface_Singleton//, Interface_Cacher
     	return md5($this->projectPrefix.self::KEY_DILIMITER.$key);
     }
     
+    protected function beginTransaction()
+    {
+        $this->transaction->begin();
+    }
+    
+    protected function commitTransaction()
+    {
+        $this->transaction->commit();
+    }
+    
+    protected function rollbackTransaction()
+    {
+        $this->transaction->rollback();
+    }
 }
 ?>

@@ -3,8 +3,16 @@
  * Memcache Fake 
  *
  */
-class SFM_Cache_Dummy
+class SFM_Cache_Dummy extends SFM_Cache
 {
+    protected $storage;
+    
+    public function __construct()
+    {
+        ;
+    }
+
+
     public function addServer($host, $port)
     {
         return true;
@@ -18,14 +26,16 @@ class SFM_Cache_Dummy
         return FALSE;
     }
     
-    public function set($key, $val, $expiration=0)
+    public function set($val)
     {
         ; 
     }
     
     public function setMulti(array $items, $expiration=0)
     {
-        ;
+        foreach ( $items as $tmp) {
+            $this->storage[$tmp->getCacheKey()] = $tmp;
+        }
     }
     
     public function delete($key)
@@ -44,5 +54,15 @@ class SFM_Cache_Dummy
     public function getResultCode()
     {
     	return Memcached::RES_SUCCESS;
+    }
+    
+    public function getVal( $key )
+    {
+        return $this->storage[$key];
+    }
+    
+    public function getStorage()
+    {
+        return $this->storage;
     }
 }

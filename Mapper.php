@@ -158,7 +158,7 @@ abstract class SFM_Mapper
     {
         if ( $this->hasUniqueFields() && ($params = $this->getOneUniqueFromParams($params)) ) {
             $cacheKey = $this->getEntityCacheKeyByUniqueVals( $this->getUniqueVals($params) );
-            $entityId = SFM_Cache_Memory::getInstance()->get($cacheKey);
+            $entityId = SFM_Cache_Memory::getInstance()->getRaw($cacheKey);
             if( null !== $entityId ) {
                 return $this->getEntityById( $entityId );
             }
@@ -800,7 +800,7 @@ abstract class SFM_Mapper
             if($object instanceof SFM_Entity) {
                 $Cache->resetTags($tags); 
             }
-            $Cache->set($cacheKey, $object, $tags, $object->getExpires());
+            $Cache->set($object);
         }
     }
     
@@ -869,7 +869,7 @@ abstract class SFM_Mapper
     {
         if($this->hasUniqueFields()) {
             $key = $entity->getCacheKeyByUniqueFields($uniqueKey);
-            SFM_Cache_Memory::getInstance()->set($key, $entity->getId());
+            SFM_Cache_Memory::getInstance()->setRaw($key, $entity->getId());
         }
     }
     
