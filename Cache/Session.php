@@ -35,4 +35,20 @@ class SFM_Cache_Session extends SFM_Cache
         
         return self::$instance;
     }
+    
+    public function setRaw($key,$value,$expiration = 0)
+    {
+        return $this->driver->set($this->generateKey($key), $value, $expiration);
+    }
+    
+    public function getRaw($key)
+    {
+        $value = $this->driver->get($this->generateKey($key));
+        return ($value === false) ? null : $value;
+    }
+    
+    public function deleteRaw($key)
+    {
+        return $this->driver->delete($this->generateKey($key));
+    }
 }    
