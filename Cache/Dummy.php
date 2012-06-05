@@ -1,9 +1,10 @@
 <?php
+require_once 'SFM/Cache.php';
 /**
  * Memcache Fake 
  *
  */
-class SFM_Cache_Dummy extends SFM_Cache
+class SFM_Cache_Dummy
 {
     protected $storage;
     
