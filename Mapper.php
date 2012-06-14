@@ -409,18 +409,18 @@ abstract class SFM_Mapper
      * 
      * @param array $params
      * @param string $cacheKey
+     * @param bool $loadEntities
      * @return SFM_Aggregate
      */
-    public function getAggregate(array $params = array(), $cacheKey=null)
+    public function getAggregate(array $params = array(), $cacheKey=null, $loadEntities=false)
     {
         //If there is a key for Cache, look to Cache
-        $aggregate = $this->getCachedAggregate($cacheKey,false); 
+        $aggregate = $this->getCachedAggregate($cacheKey,$loadEntities); 
         if($aggregate === null){
             //Look to DB
             $proto = $this->fetchArrayFromDB($params);
-            $aggregate = $this->createAggregate($proto, $cacheKey, true);
-            
-            $this->saveCachedAggregate($aggregate,false,0);
+            $aggregate = $this->createAggregate($proto, $cacheKey, $loadEntities);
+            $this->saveCachedAggregate($aggregate,$loadEntities,0);
         }
         return $aggregate;        
     }
