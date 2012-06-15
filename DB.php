@@ -104,8 +104,11 @@ class SFM_DB implements SFM_Interface_Singleton
      */
     public function fetchAll($sql, array $vars=array())
     {
+        $timer = SFM_Monitor::get()->createTimer(array('db' => 'sql', 'operation' => 'fetchAll'));
     	$stmt = $this->query($sql, $vars);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $timer->stop();
+        return $data;
     }
 
     /**
@@ -117,8 +120,11 @@ class SFM_DB implements SFM_Interface_Singleton
      */
     public function fetchLine($sql, array $vars=array())
     {
+        $timer = SFM_Monitor::get()->createTimer(array('db' => 'sql', 'operation' => 'fetchLine'));
         $stmt = $this->query($sql, $vars);
-        return $stmt->fetch(PDO::FETCH_ASSOC);
+        $data = $stmt->fetch(PDO::FETCH_ASSOC);
+        $timer->stop();
+        return $data;
     }
 
     /**
@@ -130,8 +136,11 @@ class SFM_DB implements SFM_Interface_Singleton
      */
     public function fetchValue($sql, array $vars=array())
     {
+        $timer = SFM_Monitor::get()->createTimer(array('db' => 'sql', 'operation' => 'fetchValue'));
         $stmt = $this->query($sql, $vars);
-        return $stmt->fetchColumn();
+        $data = $stmt->fetchColumn();
+        $timer->stop();
+        return $data;
     }
     
     /**
@@ -144,11 +153,13 @@ class SFM_DB implements SFM_Interface_Singleton
      */
     public function fetchColumn($sql, array $params)
     {
+        $timer = SFM_Monitor::get()->createTimer(array('db' => 'sql', 'operation' => 'fetchColumn'));
         $result = array();
         $stmt = $this->query($sql, $params);
         while ( $id = $stmt->fetchColumn() ) {
             $result[] = $id;
         }
+        $timer->stop();
         return $result; 
     }
 
@@ -161,8 +172,11 @@ class SFM_DB implements SFM_Interface_Singleton
      */
     public function update($sql, $vars)
     {
+        $timer = SFM_Monitor::get()->createTimer(array('db' => 'sql', 'operation' => 'update'));
     	$stmt = $this->query($sql, $vars);
-        return $stmt->rowCount();
+        $data = $stmt->rowCount();
+        $timer->stop();
+        return $data;
     }
 
 
@@ -202,7 +216,9 @@ class SFM_DB implements SFM_Interface_Singleton
     
     public function insert($sql, $vars, $tableName = null, $idFieldName = 'id',$isIdAutoincrement = true)
     {
+        $timer = SFM_Monitor::get()->createTimer(array('db' => 'sql', 'operation' => 'insert'));
         $stmt = $this->query($sql, $vars);
+        $timer->stop();
         if($isIdAutoincrement){
             return $this->_db->lastInsertId($tableName,$idFieldName);    
         } else {
@@ -212,8 +228,12 @@ class SFM_DB implements SFM_Interface_Singleton
     
     public function delete($sql, $vars)
     {
+        $timer = SFM_Monitor::get()->createTimer(array('db' => 'sql', 'operation' => 'delete'));
         $stmt = $this->query($sql, $vars);
-        return $stmt->rowCount();
+        $data = $stmt->rowCount();
+        $timer->stop();
+
+        return $data;
     }
     
     /**
@@ -223,8 +243,10 @@ class SFM_DB implements SFM_Interface_Singleton
     public function beginTransaction()
     {
         if($this->_transactionLevel == 0) {
+            $timer = SFM_Monitor::get()->createTimer(array('db' => 'sql', 'operation' => 'beginTransaction'));
             $this->_transactionLevel++;
             $this->_db->beginTransaction();
+            $timer->stop();
             return true;
         } else {
             return false;
@@ -240,7 +262,9 @@ class SFM_DB implements SFM_Interface_Singleton
             throw new SFM_Exception_DB('Commit without begin occured');
         $this->_transactionLevel--;
         if($this->_transactionLevel == 0) {
+            $timer = SFM_Monitor::get()->createTimer(array('db' => 'sql', 'operation' => 'commitTransaction'));
             $this->_db->commit();
+            $timer->stop();
             return true;
         } else {
             return false;
@@ -255,7 +279,9 @@ class SFM_DB implements SFM_Interface_Singleton
         //only if any transaction is started and was not rollbacked
         if($this->_transactionLevel != 0) {
             $this->_transactionLevel = 0;
+            $timer = SFM_Monitor::get()->createTimer(array('db' => 'sql', 'operation' => 'rollbackTransaction'));
             $this->_db->rollBack();
+            $timer->stop();
             return true;
         } else {
             return false;
