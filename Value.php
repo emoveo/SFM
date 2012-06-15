@@ -57,4 +57,12 @@ abstract class SFM_Value
     {
         $this->expiration = $expiration;
     }
+
+    /**
+     * @return string
+     */
+    public function __toString()
+    {
+        return $this->get();
+    }
 }
