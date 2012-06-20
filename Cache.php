@@ -327,7 +327,12 @@ class SFM_Cache implements SFM_Interface_Singleton//, Interface_Cacher
         $timer->stop();
     }
 
-    /**
+    public function getDriver()
+    {
+        return $this->driver;
+    }
+
+        /**
      * Returns key for storing tags.
      * Since tag keys must differ from object keys, method concatinates some prefix
      *

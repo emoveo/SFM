@@ -2,10 +2,10 @@
 
 /**
  * Simplify common operations on counters
- *
+ * 
  * @author andry
  */
-abstract class SFM_Counter extends SFM_Value
+abstract class SFM_Counter extends SFM_Value_Abstract
 {
     
     public  function increment()
