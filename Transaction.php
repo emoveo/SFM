@@ -5,7 +5,7 @@
  *
  * @author andry
  */
-abstract class SFM_Transaction 
+class SFM_Transaction 
 {
     public static function begin()
     {
