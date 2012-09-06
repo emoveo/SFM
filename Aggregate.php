@@ -539,4 +539,10 @@ abstract class SFM_Aggregate extends SFM_Business implements Iterator, Countable
             
         return array_search($entity->getId(), $this->getListEntitiesId());
     }
+    
+    public function clearLoadedEntities()
+    {
+        $this->entities = array();
+        $this->loadedListEntityId = array();
+    }
 }
