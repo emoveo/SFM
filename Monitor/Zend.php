@@ -10,7 +10,7 @@ class SFM_Monitor_Zend implements SFM_Monitor_Interface
      * @return SFM_Monitor_TimerInterface|SFM_Monitor_Pinba_Zend
      */
     public function createTimer($tags) {
-        $timer = new SFM_Monitor_Pinba_Zend($tags);
+        $timer = new SFM_Monitor_Zend_Timer($tags);
         return $timer;
     }
 

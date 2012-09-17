@@ -15,7 +15,7 @@ class SFM_Monitor_Zend_Timer implements SFM_Monitor_TimerInterface
     public function __construct($tags)
     {
         $label = $this->createLabel($tags);
-        if(!isset($this->_profilers)){
+        if(!isset($this->_profilers[$label])){
             $this->_profilers[$label] = new Zend_Db_Profiler_Firebug($label);
             $this->_profilers[$label]->setEnabled(true);
         }
