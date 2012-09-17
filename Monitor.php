@@ -8,6 +8,8 @@ class SFM_Monitor {
      * @var $monitor SFM_Monitor_Interface
      */
     private static $monitor;
+    
+    private static $monitorType;
 
     /**
      * get concrete SFM_Monitor_Interface implementation
@@ -24,12 +26,24 @@ class SFM_Monitor {
     }
 
     /**
+    * @param string $monitorType
+    * */    
+    public static function setMonitorType($monitorType)
+    {
+        self::$monitorType = $monitorType;
+    }
+
+    /**
      * create concrete SFM_Monitor_Interface implementation
      * @static
      * @return SFM_Monitor_Interface
      */
     private static function create() {
-        $monitor = extension_loaded('pinba') ? new SFM_Monitor_Pinba() : new SFM_Monitor_Dummy();
+        if(self::$monitorType === null){
+            self::$monitorType = SFM_Monitor_Factory::TYPE_PINBA;
+        }
+            
+        $monitor = SFM_Monitor_Factory::create(self::$monitorType);
         return $monitor;
     }
 
