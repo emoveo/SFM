@@ -1,5 +1,5 @@
 <?php
-interface SFM_Monitor_Factory
+class SFM_Monitor_Factory
 {
     const TYPE_PINBA = 'Pinba';
     const TYPE_ZEND = 'Zend';
