@@ -837,11 +837,9 @@ abstract class SFM_Mapper
 				$name = implode('',$nameParts);
 				$mapperClassName1Variant = 'Mapper_' . $name;
 				$mapperClassName2Variant = 'Mapper_' . implode('_',$nameParts);
-				try {
-			        if(class_exists($mapperClassName1Variant)){
-			            $mapperClassName = $mapperClassName1Variant;
-			        }
-				} catch(SFM_Exception_Autoload $e){
+		        if(class_exists($mapperClassName1Variant)){
+		            $mapperClassName = $mapperClassName1Variant;
+		        } else {
 				    //simply it was variant2
 				    $mapperClassName = $mapperClassName2Variant;
 				}
