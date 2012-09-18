@@ -76,7 +76,7 @@ class SFM_AutoLoad implements SFM_Interface_Singleton
         //commented out by A-25 - WTF? What for is that string?
         //eval("class {$className} extends stdClass {}");
         
-        throw new SFM_Exception_Autoload("File \"{$fileName}\" with class \"{$className}\" could not be found. Searched in dirs:<br />" . str_replace(PATH_SEPARATOR, "<br />", get_include_path()) . "");
+        //throw new SFM_Exception_Autoload("File \"{$fileName}\" with class \"{$className}\" could not be found. Searched in dirs:<br />" . str_replace(PATH_SEPARATOR, "<br />", get_include_path()) . "");
          
     }
     
