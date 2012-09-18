@@ -80,6 +80,21 @@ class SFM_Util_Image
 
         $image->writeImages($filename, true);
     }
+    
+    static public function imQualityScaleToWidth($filename, $newWidth, $blur = 1)
+    {
+        list($width, $height) = getimagesize($filename);
+        if ($width <= $newWidth)
+            return;
+
+        $image = new Imagick($filename);
+        
+        // If 0 is provided as a width or height parameter,
+        // aspect ratio is maintained
+        $image->resizeImage($newWidth, 0, imagick::FILTER_HERMITE, $blur, false);
+
+        $image->writeImages($filename, true);
+    }
 
     static public function imScaleToSideWithBorders($filename, $newSideSize)
     {
@@ -107,4 +122,29 @@ class SFM_Util_Image
         $image->writeImages($filename, true);
     }
 
+    static public function imQualityScaleToSideWithBorders($filename, $newSideSize, $blur = 1)
+    {
+        list($width, $height) = getimagesize($filename);
+        // if ($width <= $newWidth) return;
+
+        $image = new Imagick($filename);
+
+        $fitbyWidth = (($newSideSize / $width) < ($newSideSize / $height)) ? true : false;
+
+        if ($fitbyWidth) {
+            if ($width > $newSideSize)
+                $image->resizeImage($newSideSize, 0, imagick::FILTER_HERMITE, $blur, false);
+        } else {
+            if ($height > $newSideSize)
+                $image->resizeImage(0, $newSideSize, imagick::FILTER_HERMITE, $blur, false);
+        }
+        $newDimentions = $image->getImageGeometry();
+
+        /* The overlay x and y coordinates */
+        $x = ( $newSideSize - $newDimentions['width'] ) / 2;
+        $y = ( $newSideSize - $newDimentions['height'] ) / 2;
+        $image->borderImage('white', $x, $y);
+
+        $image->writeImages($filename, true);
+    }
 }
