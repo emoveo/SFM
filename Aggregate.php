@@ -545,4 +545,19 @@ abstract class SFM_Aggregate extends SFM_Business implements Iterator, Countable
         $this->entities = array();
         $this->loadedListEntityId = array();
     }
+    
+    /**
+     * Закольцевать агрегат, начиная с определенного места.
+     * Например, есть 5 элементов, надо закольцевать, начиная с 3.
+     * В результате получается 3,4,5,1,2.
+     * @param integer $offset
+     * @return SFM_Aggregate     
+     */
+    public function recircle($offset)
+    {
+        $entityIds = $this->getListEntitiesId();
+        $sortedEntityIds = array_slice($entityIds,$offset - 1,count($entityIds) - ($offset - 1));
+        $sortedEntityIds = array_merge($sortedEntityIds,array_slice($entityIds,0,$offset - 1));
+        return $this->mapper->createAggregate($sortedEntityIds,null,true);
+    }
 }
