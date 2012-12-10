@@ -40,6 +40,15 @@ abstract class SFM_Entity extends SFM_Business
     {
         return $this->getInfo($name);
     }
+
+    /**
+     * @param string $name
+     * @return bool
+     */
+    public function __isset($name)
+    {
+        return isset($this->proto[$name]);
+    }
     
     /**
      * Returns the property of Business object if name of the property given, or entire info array overwise
