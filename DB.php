@@ -33,21 +33,24 @@ class SFM_DB implements SFM_Interface_Singleton
     protected $_transactionLevel = 0;
 
     /**
-    * Creates a new DB connection object and connect to the database
-    *
-    * @param string $name Name of the connection
-    * @throws SFM_Exception_DB
-    */
+     * Creates a new DB connection object and connect to the database
+     * @param string $connectionName Name of the connection
+     * @throws SFM_Exception_DB
+     */
     protected function __construct($connectionName)
     {
         try {
             $config = Zend_Registry::get(Application::CONFIG_NAME);
-			$this->_db = Zend_Db::factory($config->database->main->driver,$config->database->main->params);
-			if(!empty($config->database->main->initialQuery))
-				$this->_db->query($config->database->main->initialQuery);
-            /*$dsn = $Config->database->{$connectionName}->driver.':host='.$Config->database->{$connectionName}->params->host.';dbname='.$Config->database->{$connectionName}->params->dbname;
-            $this->pdo = new PDO($dsn, $Config->database->{$connectionName}->params->username, $Config->database->{$connectionName}->params->password);
-            $this->pdo->exec("SET NAMES 'utf8'");*/
+            $connectionConfig = $config->database->{$connectionName};
+
+            if (is_null($connectionConfig)) {
+                throw new SFM_Exception_DB("Connection `{$connectionName}` is not exist");
+            }
+
+            $this->_db = Zend_Db::factory($connectionConfig->driver, $connectionConfig->params);
+            if (!empty($connectionConfig->initialQuery)) {
+                $this->_db->query($connectionConfig->initialQuery);
+            }
             
         } catch (Zend_Db_Exception $e) {
             throw new SFM_Exception_DB('Error while connecting to db. '.$e->getMessage());
