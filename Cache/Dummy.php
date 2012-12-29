@@ -54,7 +54,7 @@ class SFM_Cache_Dummy
     
     public function getResultCode()
     {
-    	return Memcached::RES_SUCCESS;
+        return Memcached::RES_SUCCESS;
     }
     
     public function getVal( $key )

@@ -22,41 +22,41 @@ class SFM_Util_Upload
 
     static public function isImage($file, $mime_type=false)
     {
-		$filename = trim($file["name"], ". \r\n\t");
-		$arr = explode(".", $filename);
-		$ext = strtoupper($arr[count($arr)-1]);
-		if(strlen($ext)>0)
-		{
-			if(in_array($ext, explode(",", "JPG,BMP,JPEG,JPE,GIF,PNG")))
-				if(strpos($file["type"], "image/")!==false || $mime_type===false) return true;
-		}
-		return false;
+        $filename = trim($file["name"], ". \r\n\t");
+        $arr = explode(".", $filename);
+        $ext = strtoupper($arr[count($arr)-1]);
+        if(strlen($ext)>0)
+        {
+            if(in_array($ext, explode(",", "JPG,BMP,JPEG,JPE,GIF,PNG")))
+                if(strpos($file["type"], "image/")!==false || $mime_type===false) return true;
+        }
+        return false;
     }
 
     static public function isVideo($file, $mime_type=false)
     {
-		$filename = trim($file["name"], ". \r\n\t");
-		$arr = explode(".", $filename);
-		$ext = strtoupper($arr[count($arr)-1]);
-		if(strlen($ext)>0)
-		{
-			if(in_array($ext, explode(",", "FLV,MPG,MP4,MOV,AVI,WMV")))
-			    if(strpos($file["type"], "video/")!==false || $mime_type===false) return true;
-		}
-		
-		return false;
+        $filename = trim($file["name"], ". \r\n\t");
+        $arr = explode(".", $filename);
+        $ext = strtoupper($arr[count($arr)-1]);
+        if(strlen($ext)>0)
+        {
+            if(in_array($ext, explode(",", "FLV,MPG,MP4,MOV,AVI,WMV")))
+                if(strpos($file["type"], "video/")!==false || $mime_type===false) return true;
+        }
+        
+        return false;
     }
 
     static public function getType($file)
     {
         $mime = mime_content_type($file["tmp_name"]);
         $arr = explode("/", $mime);
-		return $arr[0];
+        return $arr[0];
     }
 
     static public function getExt($file)
     {
-		$arr = explode(".", trim($file["name"], ". \r\n\t"));
-		return strtolower($arr[count($arr)-1]);
+        $arr = explode(".", trim($file["name"], ". \r\n\t"));
+        return strtolower($arr[count($arr)-1]);
     }
 }

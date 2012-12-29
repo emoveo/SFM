@@ -7,17 +7,17 @@
  */
 class SFM_Controller_Request
 {
-	/**
-	 * Returns either it is post request
-	 *
-	 * @return bool
-	 */
-	static public function isPost()
-	{
-		return strtoupper($_SERVER['REQUEST_METHOD']) == 'POST';
-	}
-	
-	/**
+    /**
+     * Returns either it is post request
+     *
+     * @return bool
+     */
+    static public function isPost()
+    {
+        return strtoupper($_SERVER['REQUEST_METHOD']) == 'POST';
+    }
+    
+    /**
     * Get any GET variable
     * @param string $var            Variable name
     * @param mixed $default         Default value
@@ -62,7 +62,7 @@ class SFM_Controller_Request
      */
     static public function checkCsrf()
     {
-    	assert("Request::isPost()");
+        assert("Request::isPost()");
     }
     
 /**
@@ -91,7 +91,7 @@ class SFM_Controller_Request
     */
     static public function getSession($var = "", $default = "")
     {
-    	if (empty($var)) {
+        if (empty($var)) {
             return $_SESSION;
         }
         if (@key_exists($var, $_SESSION)) {

@@ -7,9 +7,9 @@
  */
 interface SFM_Autoload_Interface 
 {
-	/**
-	* @param string $className 
-	* @return string
+    /**
+    * @param string $className 
+    * @return string
     */
-	public function loadClass( $className );
+    public function loadClass( $className );
 }

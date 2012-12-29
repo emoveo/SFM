@@ -100,10 +100,10 @@ abstract class SFM_Entity extends SFM_Business
      */
     public function update(array $params)
     {
-    	//@TODO rewrite without clone
-    	if(empty($params))
-    		return true;
-    		
+        //@TODO rewrite without clone
+        if(empty($params))
+            return true;
+            
         $oldEntity = clone $this;
         foreach ($params as $key => $value) {
             //Check that field exists
@@ -115,11 +115,11 @@ abstract class SFM_Entity extends SFM_Business
                 
                 //if it is an some id-field...
                 if(strrpos($key,'_id') !== false) {
-	                //...and if there is a lazy-object loaded already...
-	                if (isset($this->computed[$key])) {
-	                	//...kill it. Goodbye!
-	                	unset($this->computed[$key]);
-	                }
+                    //...and if there is a lazy-object loaded already...
+                    if (isset($this->computed[$key])) {
+                        //...kill it. Goodbye!
+                        unset($this->computed[$key]);
+                    }
                 }
             } else {
                 unset($params[$key]);
@@ -129,7 +129,7 @@ abstract class SFM_Entity extends SFM_Business
         return $this->mapper->updateEntity($params, $this);
     }
     
-	/**
+    /**
      * Wrapper for update with transaction folding
      * 
      * @return bool True if update() success, false - if update failure or database exception
@@ -158,7 +158,7 @@ abstract class SFM_Entity extends SFM_Business
         return $this->mapper->deleteEntity($this);
     }
     
-	/**
+    /**
      * Wrapper for delete with transaction folding
      * 
      * @return bool True if delete() success, false - if delete failure or database exception
@@ -233,14 +233,14 @@ abstract class SFM_Entity extends SFM_Business
     }
     
     /**
-     *	Returns entity as an array value with 'entity' key 
-     *	Needs for partials.
+     *  Returns entity as an array value with 'entity' key 
+     *  Needs for partials.
      *
-     *	@return array
+     *  @return array
      */
     public function toArray()
     {
-    	return array('entity' => $this);
+        return array('entity' => $this);
     } 
     
 }

@@ -520,7 +520,7 @@ abstract class SFM_Aggregate extends SFM_Business implements Iterator, Countable
         return $index !== null;
     }
     
-	/**
+    /**
      * Returns entity index
      * @param SFM_Entity $entity
      * @param boolean $onlyLoaded If true, entity is searched only in loaded entities

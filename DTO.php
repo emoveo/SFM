@@ -2,7 +2,7 @@
 
 abstract class DTO 
 {
-	/**
+    /**
      *
      * @var int
      */

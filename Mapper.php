@@ -219,19 +219,19 @@ abstract class SFM_Mapper
         $uniqueVals = array();
 
         foreach ($uniqueKey as $uniqueKeyItem) {
-        	if(!is_array($uniqueKeyItem))
-        		$uniqueKeyItem = array($uniqueKeyItem);
-        	foreach ($uniqueKeyItem as $item) {
-	            $val = $entity->getInfo($item);
-	            if( null !== $val ) {
-	                if(is_string($val)) {
-	                    $val = mb_strtolower($val);
-	                }
-	                $uniqueVals[] = $val;
-	            } else {
-	                throw new SFM_Exception_Mapper('Unknown field - '.$item);
-	            }
-        	}
+            if(!is_array($uniqueKeyItem))
+                $uniqueKeyItem = array($uniqueKeyItem);
+            foreach ($uniqueKeyItem as $item) {
+                $val = $entity->getInfo($item);
+                if( null !== $val ) {
+                    if(is_string($val)) {
+                        $val = mb_strtolower($val);
+                    }
+                    $uniqueVals[] = $val;
+                } else {
+                    throw new SFM_Exception_Mapper('Unknown field - '.$item);
+                }
+            }
         }
         return $this->getEntityCacheKeyByUniqueVals( $uniqueVals );
     }
@@ -244,14 +244,14 @@ abstract class SFM_Mapper
      */
     public function createEntity(array $proto)
     {
-    	$className = $this->entityClassName;
-    	if(array_key_exists($this->idField, $proto)) {
+        $className = $this->entityClassName;
+        if(array_key_exists($this->idField, $proto)) {
             $entity = $this->getEntityFromIdentityMap($className, $proto[$this->idField]);
         } else {
             $entity = null;
         }
         if ($entity === null) {
-        	$entity = new $className($proto, $this);
+            $entity = new $className($proto, $this);
 
             SFM_IdentityMap::addEntity($entity);
         }
@@ -271,7 +271,7 @@ abstract class SFM_Mapper
      */
     public function updateEntity(array $params, SFM_Entity $entity)
     {
-    	//Prevent changing id of Entity
+        //Prevent changing id of Entity
         unset($params[$this->idField]);
 
         //First update the DB
@@ -348,7 +348,7 @@ abstract class SFM_Mapper
         $Cache->delete($entity->getCacheKey());
         //@todo Delete tags, that are related only for this object (if we need to save memory space)
         $Cache->resetTags($entity->getCacheTags());
-	    if($this->hasUniqueFields()) {
+        if($this->hasUniqueFields()) {
              foreach ( $this->uniqueFields as $uniqueKey ) {
                  $key = $entity->getCacheKeyByUniqueFields($uniqueKey);
                  $Cache->delete( $key );
@@ -399,7 +399,7 @@ abstract class SFM_Mapper
      */
     public function createAggregate(array $proto, $cacheKey=null, $loadEntities=false)
     {
-    	$className = $this->aggregateClassName;
+        $className = $this->aggregateClassName;
         return new $className($proto, $this, $cacheKey, $loadEntities);
     }
 
@@ -449,7 +449,7 @@ abstract class SFM_Mapper
         return $aggregate;
     }
 
-	/**
+    /**
      * The same as getAggregate, but by array of ids
      * @see getAggregate
      *
@@ -513,7 +513,7 @@ abstract class SFM_Mapper
         if( !preg_match('/select([^.]*)(\.{0,1})\*/', $tmp)) {
             throw new Exception('You must use "SELECT * FROM" to load aggregate');
         }
-    	return $this->getAggregateBySQL($sql, $params, $cacheKey, true, $expiration);
+        return $this->getAggregateBySQL($sql, $params, $cacheKey, true, $expiration);
     }
 
     /**
@@ -524,9 +524,9 @@ abstract class SFM_Mapper
      */
     public function getMultiEntitiesByIds( array $entityId )
     {
-    	if( sizeof($entityId) == 0 || null == $entityId) {
-    		return array();
-    	}
+        if( sizeof($entityId) == 0 || null == $entityId) {
+            return array();
+        }
         $cachedVals = SFM_Cache_Memory::getInstance()->getMulti( $this->getEntitiesCacheKeyByListId($entityId) );
 
         $foundedId = array();
@@ -565,12 +565,12 @@ abstract class SFM_Mapper
     protected function loadEntitiesFromDbByIds( array $entityId )
     {
 
-    	$result = array();
+        $result = array();
         if( sizeof($entityId) != 0 ) {
             $sql = 'SELECT *';
-			$calculated = $this->getCalculatedExpressions();
+            $calculated = $this->getCalculatedExpressions();
             if(!empty($calculated))
-            	$sql.= ', '.implode(', ',$calculated);
+                $sql.= ', '.implode(', ',$calculated);
             $sql.= ' FROM '.$this->tableName.' WHERE '. $this->getIdField() .' IN ('. implode(",",$entityId) .')';
             $data = SFM_DB::getInstance()->fetchAll($sql);
             foreach ($data as $row) {
@@ -581,12 +581,12 @@ abstract class SFM_Mapper
     }
 
     /**
-     * 	returns an array containing fields that are not presented in the DB but are counted.
-     * 	For instance, array('COUNT(id)', 'SUM(rating) as overallrating')
+     *  returns an array containing fields that are not presented in the DB but are counted.
+     *  For instance, array('COUNT(id)', 'SUM(rating) as overallrating')
      */
     protected function getCalculatedExpressions()
     {
-    	return array();
+        return array();
     }
 
     public function getCacheKeysByEntitiesId( array $ids )
@@ -614,7 +614,7 @@ abstract class SFM_Mapper
 
     protected function getEntityCacheKeyByUniqueVals( array $values )
     {
-    	$key = $this->entityClassName . SFM_Cache_Memory::KEY_DILIMITER;
+        $key = $this->entityClassName . SFM_Cache_Memory::KEY_DILIMITER;
         foreach ($values as $item) {
             if(is_string($item)) {
                 $item = mb_strtolower($item);
@@ -661,7 +661,7 @@ abstract class SFM_Mapper
         return $cacheKey;
     }
 
-	/**
+    /**
      * Generate cache key basing on parent and child entity. Aggregate is replaced by concrete child id.
      * @param SFM_Entity $parent
      * @param SFM_Entity $child
@@ -670,11 +670,11 @@ abstract class SFM_Mapper
      */
     public function getAggregateCacheKeyByParentAndChildEntity(SFM_Entity $parent, SFM_Entity $child, $prefix = '')
     {
-    	$cacheKey = $this->getAggregateCacheKeyByParentEntity($parent,$child->getId()).SFM_Cache_Memory::KEY_DILIMITER.$prefix;
-    	return $cacheKey;
+        $cacheKey = $this->getAggregateCacheKeyByParentEntity($parent,$child->getId()).SFM_Cache_Memory::KEY_DILIMITER.$prefix;
+        return $cacheKey;
     }
 
-	/**
+    /**
      * Generate cache key basing on entity list. Aggregate is replaced by concrete child id.
      * @param SFM_Aggregate|array $entityList
      * @param $prefix Use it if you need different cache keys for same parent entity
@@ -686,8 +686,8 @@ abstract class SFM_Mapper
         foreach($entityList as $entity){
             $cacheKey.= $this->getAggregateCacheKeyByParentEntity($entity).SFM_Cache_Memory::KEY_DILIMITER;
         }
-    	//$cacheKey = $this->getAggregateCacheKeyByParentEntity($parent,$child->getId()).SFM_Cache_Memory::KEY_DILIMITER.$prefix;
-    	return $cacheKey.$prefix;
+        //$cacheKey = $this->getAggregateCacheKeyByParentEntity($parent,$child->getId()).SFM_Cache_Memory::KEY_DILIMITER.$prefix;
+        return $cacheKey.$prefix;
     }
 
    /**
@@ -720,7 +720,7 @@ abstract class SFM_Mapper
     {
         $quoteSymbol = SFM_DB::getInstance()->getQuoteSymbol();
 
-    	$limit = $orderBy = $groupBy = '';
+        $limit = $orderBy = $groupBy = '';
         if (isset($params[self::SQL_PARAM_LIMIT])) {
             $limit = ' LIMIT ' . $params[self::SQL_PARAM_LIMIT];
             unset($params[self::SQL_PARAM_LIMIT]);
@@ -738,15 +738,15 @@ abstract class SFM_Mapper
 
         $conditions = array();
 
-    	if (isset($params[self::SQL_PARAM_CONDITION])) {
-    		$pConditions = (array) $params[self::SQL_PARAM_CONDITION];
-    		foreach ($pConditions as $pCond) {
-    			$conditions[]= $pCond;
-    		}
+        if (isset($params[self::SQL_PARAM_CONDITION])) {
+            $pConditions = (array) $params[self::SQL_PARAM_CONDITION];
+            foreach ($pConditions as $pCond) {
+                $conditions[]= $pCond;
+            }
             unset($params[self::SQL_PARAM_CONDITION]);
         }
 
-    	foreach ($params as $key => $value) {
+        foreach ($params as $key => $value) {
             $conditions []= $quoteSymbol."{$key}".$quoteSymbol." = :{$key}";
         }
 
@@ -819,32 +819,32 @@ abstract class SFM_Mapper
     public function lazyload(SFM_Business $business, $fieldName)
     {
 
-    	if ($business instanceof SFM_Entity) {
+        if ($business instanceof SFM_Entity) {
             if (substr($fieldName, -3) == '_id') {
-           		//$name = ucfirst(substr($fieldName, 0, -3));
-           		 //fixed by A-25
+                //$name = ucfirst(substr($fieldName, 0, -3));
+                 //fixed by A-25
                 //mappers of field names with _ should have camelCase names
                 //for example, street_type_id => Mapper_StreetType
                 //or street_type_id => Mapper_Street_Type
-				$name = substr($fieldName, 0, -3);
-				$nameParts = explode('_',$name);
+                $name = substr($fieldName, 0, -3);
+                $nameParts = explode('_',$name);
 
 
-           		foreach($nameParts as &$namePart)
-				{
-			        $namePart = ucfirst($namePart);
-				}
+                foreach($nameParts as &$namePart)
+                {
+                    $namePart = ucfirst($namePart);
+                }
 
 
-				$name = implode('',$nameParts);
-				$mapperClassName1Variant = 'Mapper_' . $name;
-				$mapperClassName2Variant = 'Mapper_' . implode('_',$nameParts);
-		        if(class_exists($mapperClassName1Variant)){
-		            $mapperClassName = $mapperClassName1Variant;
-		        } else {
-				    //simply it was variant2
-				    $mapperClassName = $mapperClassName2Variant;
-				}
+                $name = implode('',$nameParts);
+                $mapperClassName1Variant = 'Mapper_' . $name;
+                $mapperClassName2Variant = 'Mapper_' . implode('_',$nameParts);
+                if(class_exists($mapperClassName1Variant)){
+                    $mapperClassName = $mapperClassName1Variant;
+                } else {
+                    //simply it was variant2
+                    $mapperClassName = $mapperClassName2Variant;
+                }
 
                 if (class_exists($mapperClassName)) {
                     $mapper = new $mapperClassName;
@@ -895,23 +895,23 @@ abstract class SFM_Mapper
      */
     protected function getOneUniqueFromParams( array $params )
     {
-    	$result = false;
+        $result = false;
 
         if(!$this->hasUniqueFields()) {
             return false;
         }
 
         foreach ($this->uniqueFields as $uniqueKey) {
-        	$match = array();
-	        foreach ($params as $key => $val) {
-	            if(in_array($key, $uniqueKey)) {
-	                $match[$key] = $val;
-	            }
-	        }
-	        if( sizeof($uniqueKey) === sizeof($match) ) {
-	            $result = $match;
-	            break;
-	        }
+            $match = array();
+            foreach ($params as $key => $val) {
+                if(in_array($key, $uniqueKey)) {
+                    $match[$key] = $val;
+                }
+            }
+            if( sizeof($uniqueKey) === sizeof($match) ) {
+                $result = $match;
+                break;
+            }
         }
         return $result;
     }

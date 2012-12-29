@@ -29,13 +29,13 @@ class SFM_AutoLoad implements SFM_Interface_Singleton
      * @return SFM_Autoload
      */
     public static function getInstance() {
-    	if( false === self::$instance ) {
-    	    self::$instance = new SFM_AutoLoad();
+        if( false === self::$instance ) {
+            self::$instance = new SFM_AutoLoad();
 
-    	    self::$instance->addRule(new SFM_AutoLoad_Rule_SFMFramework());
-    	    self::$instance->addRule(new SFM_Autoload_Rule_SFMProject());
-    	}
-    	return self::$instance;
+            self::$instance->addRule(new SFM_AutoLoad_Rule_SFMFramework());
+            self::$instance->addRule(new SFM_Autoload_Rule_SFMProject());
+        }
+        return self::$instance;
     }
     
     
@@ -51,9 +51,9 @@ class SFM_AutoLoad implements SFM_Interface_Singleton
     }
     
     public static function autoLoad( $class ) {
-    	SFM_AutoLoad::getInstance()->loadClass( $class );
-    	return $class;
-    	
+        SFM_AutoLoad::getInstance()->loadClass( $class );
+        return $class;
+        
     }
     
     /**
@@ -85,7 +85,7 @@ class SFM_AutoLoad implements SFM_Interface_Singleton
      *
      */
     public function register() {
-    	spl_autoload_register(array('SFM_AutoLoad', 'autoLoad'));
+        spl_autoload_register(array('SFM_AutoLoad', 'autoLoad'));
     }
     
     
@@ -95,7 +95,7 @@ class SFM_AutoLoad implements SFM_Interface_Singleton
      */
     public function isReadable( $fileName ) 
     {
-    	if (!$fh = @fopen($fileName, 'r', true)) {
+        if (!$fh = @fopen($fileName, 'r', true)) {
             return false;
         }
         @fclose($fh);

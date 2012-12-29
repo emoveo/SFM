@@ -13,9 +13,9 @@ class SFM_Autoload_Rule_SFMProject implements SFM_AutoLoad_Interface
      * @param string $className
      * @return string 
      */
-	public function loadClass( $className )
-	{
-	    $dirs = explode("_", $className);
-	    return (str_replace('_', '/', $className) . "." . $dirs[0] . '.php');
-	}
+    public function loadClass( $className )
+    {
+        $dirs = explode("_", $className);
+        return (str_replace('_', '/', $className) . "." . $dirs[0] . '.php');
+    }
 }

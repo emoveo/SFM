@@ -18,7 +18,7 @@ class SFM_Cache_Session extends SFM_Cache
         $Config = Zend_Registry::get(Application::CONFIG_NAME);
         $projectPrefix = '';
         if($Config->memcachedAPI->projectPrefix)
-        	$projectPrefix = $Config->memcachedAPI->projectPrefix;
+            $projectPrefix = $Config->memcachedAPI->projectPrefix;
         parent::__construct($Config->memcachedAPI->sessionMemory->host, $Config->memcachedAPI->sessionMemory->port,$projectPrefix,false);
     }
     

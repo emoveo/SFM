@@ -79,22 +79,22 @@ class SFM_DB implements SFM_Interface_Singleton
     
     /**
      * Returns adapter object
-     *	@return Zend_Db_Adapter_Abstract 
+     *  @return Zend_Db_Adapter_Abstract 
      */
     public function getAdapter()
     {
-    	return $this->_db;
-    	
+        return $this->_db;
+        
     }
     
     public function getQuoteSymbol()
     {
-    	return $this->getAdapter()->getQuoteIdentifierSymbol();
+        return $this->getAdapter()->getQuoteIdentifierSymbol();
     }
 
     public function quoteIdentifier($ident, $auto=false)
     {
-    	return $this->getAdapter()->quoteIdentifier($ident,$auto);
+        return $this->getAdapter()->quoteIdentifier($ident,$auto);
     }
     
     
@@ -108,7 +108,7 @@ class SFM_DB implements SFM_Interface_Singleton
     public function fetchAll($sql, array $vars=array())
     {
         $timer = SFM_Monitor::get()->createTimer(array('db' => 'sql', 'operation' => 'fetchAll'));
-    	$stmt = $this->query($sql, $vars);
+        $stmt = $this->query($sql, $vars);
         $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
         $timer->stop();
         return $data;
@@ -176,7 +176,7 @@ class SFM_DB implements SFM_Interface_Singleton
     public function update($sql, $vars)
     {
         $timer = SFM_Monitor::get()->createTimer(array('db' => 'sql', 'operation' => 'update'));
-    	$stmt = $this->query($sql, $vars);
+        $stmt = $this->query($sql, $vars);
         $data = $stmt->rowCount();
         $timer->stop();
         return $data;
@@ -205,15 +205,15 @@ class SFM_DB implements SFM_Interface_Singleton
             throw new SFM_Exception_DB('Error occured while running sql: ' . var_export($stmt->errorInfo(), true));
         }
         return $stmt;*/
-    	//Reflection::export(new ReflectionObject(/*'getQuoteIdentifierSymbol',*/$this->_db));
-    	//var_dump($this->_db->getQuoteIdentifierSymbol());
-    	return $this->_db->query($sql, $vars);
+        //Reflection::export(new ReflectionObject(/*'getQuoteIdentifierSymbol',*/$this->_db));
+        //var_dump($this->_db->getQuoteIdentifierSymbol());
+        return $this->_db->query($sql, $vars);
     }
     
     /**
-   	 * @param string $sql
-   	 * @param array $vars
-   	 * @param string|null $tableName it is necessary for postgres to generate last sequence id
+     * @param string $sql
+     * @param array $vars
+     * @param string|null $tableName it is necessary for postgres to generate last sequence id
      *
      */
     
@@ -292,11 +292,11 @@ class SFM_DB implements SFM_Interface_Singleton
     }
     
     /**
-     *	@return void 
+     *  @return void 
      *
      */
     public function setProfiler($profiler)
     {
-    	$this->_db->setProfiler($profiler);	
+        $this->_db->setProfiler($profiler); 
     }
 }

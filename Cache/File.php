@@ -19,7 +19,7 @@ class SFM_Cache_File extends SFM_Cache
         $Config = Zend_Registry::get(Application::CONFIG_NAME);
         $projectPrefix = '';
         if($Config->memcachedAPI->projectPrefix)
-        	$projectPrefix = $Config->memcachedAPI->projectPrefix;
+            $projectPrefix = $Config->memcachedAPI->projectPrefix;
         parent::__construct($Config->memcachedAPI->defaultFile->host, $Config->memcachedAPI->defaultFile->port,$projectPrefix,$Config->memcached->disable);
     }
     

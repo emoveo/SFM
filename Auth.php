@@ -53,8 +53,8 @@ class SFM_Auth implements SFM_Interface_Singleton
      * @var array
      */
     protected $_messages;
-	
-	
+    
+    
     /**
      * Singleton instance
      *
@@ -106,8 +106,8 @@ class SFM_Auth implements SFM_Interface_Singleton
         //Select User by Email
         $user = Mapper_User::getInstance()->getUserByMailAndPasswd($email, $pass);
         if($user === null) {
-        	$this->_code = self::FAILURE_IDENTITY_NOT_FOUND;
-        	return;
+            $this->_code = self::FAILURE_IDENTITY_NOT_FOUND;
+            return;
         }
 
         //Check password (Here may be different logic)
@@ -117,7 +117,7 @@ class SFM_Auth implements SFM_Interface_Singleton
         } else {
           $this->_code = self::FAILURE_CREDENTIAL_INVALID;
         }  
-    	
+        
         //Return result code
         return $this->_code;
     }
@@ -141,7 +141,7 @@ class SFM_Auth implements SFM_Interface_Singleton
      */
     public function getIdentity()
     {
-    	return (isset($_SESSION["logged_user"]) && $_SESSION["logged_user"] != '') ? $_SESSION["logged_user"] : null; 
+        return (isset($_SESSION["logged_user"]) && $_SESSION["logged_user"] != '') ? $_SESSION["logged_user"] : null; 
     }
 
     /**
