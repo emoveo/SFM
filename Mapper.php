@@ -362,13 +362,24 @@ abstract class SFM_Mapper
 
     /**
      * Executes insert SQL query and returns Entity
-     * Must be extended in children to provide filtering
      *
-     * @param array $proto
+     * @param $proto
+     * @param bool $makeValidation make constraints validation
      * @return SFM_Entity
+     * @throws SFM_Exception_EntityValidation
      */
-    public function insertEntity($proto)
+    public function insertEntity($proto, $makeValidation = true)
     {
+        if ($makeValidation) {
+            $handler = call_user_func("{$this->entityClassName}::getEntityHandler");
+            if ($handler instanceof SFM_Entity_HandlerInterface) {
+                $proto = $handler->handle($proto);
+                if ($errors = $handler->getErrors()) {
+                    throw new SFM_Exception_EntityValidation("Insert failed", $errors);
+                }
+            }
+        }
+
         if($this->isIdAutoIncrement()){
             unset($proto[$this->idField]);
         }

@@ -18,6 +18,9 @@ abstract class SFM_Entity extends SFM_Business
      */
     protected $mapper;
 
+    /** @var SFM_Entity_HandlerInterface */
+    protected static $entityHandler;
+
 
     /**
      * Constructor
@@ -27,6 +30,27 @@ abstract class SFM_Entity extends SFM_Business
     {
         $this->proto = $proto;
         $this->mapper = $mapper;
+    }
+
+    /**
+     * Configure entity constraints
+     * @param SFM_Entity_HandlerInterface $handler
+     */
+    protected static function configure(SFM_Entity_HandlerInterface $handler)
+    {
+    }
+
+    /**
+     * @return SFM_Entity_HandlerInterface
+     */
+    public static function getEntityHandler()
+    {
+        if (is_null(static::$entityHandler)) {
+            static::$entityHandler = new SFM_Entity_Handler();
+            static::configure(static::$entityHandler);
+        }
+
+        return static::$entityHandler;
     }
 
     /**
@@ -91,19 +115,27 @@ abstract class SFM_Entity extends SFM_Business
     {
         return $this->proto[$this->mapper->getIdField()];
     }
-    
-    
+
     /**
      * Wrapper for mapper's updateEntity method
      * @param array $params Fields to be updated and new values
+     * @param bool $makeValidation make constraints validation
      * @return mixed ID of updated entity in case of successful update, false - overwise
+     * @throws SFM_Exception_EntityValidation
      */
-    public function update(array $params)
+    public function update(array $params, $makeValidation = true)
     {
+        if ($makeValidation && self::getEntityHandler() instanceof SFM_Entity_HandlerInterface) {
+            $params = self::getEntityHandler()->handle($params);
+            if ($errors = self::getEntityHandler()->getErrors()) {
+                throw new SFM_Exception_EntityValidation("Update failed", $errors);
+            }
+        }
+
         //@TODO rewrite without clone
         if(empty($params))
             return true;
-            
+        
         $oldEntity = clone $this;
         foreach ($params as $key => $value) {
             //Check that field exists
