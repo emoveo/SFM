@@ -133,12 +133,11 @@ class SFM_Cache implements SFM_Interface_Singleton//, Interface_Cacher
             self::KEY_EXPIRES  => $value->getExpires(),
         );
 
-        if( !$this->transaction->isStarted() ) {
-            $this->_set($value->getCacheKey(), $arr, $value->getExpires());
+        if ($this->transaction->isStarted()) {
+            $this->transaction->logBusiness($value);
         } else {
-            $this->transaction->log($value);
+            $this->_set($value->getCacheKey(), $arr, $value->getExpires());
         }
-
     }
 
 
@@ -159,10 +158,11 @@ class SFM_Cache implements SFM_Interface_Singleton//, Interface_Cacher
                 self::KEY_EXPIRES  => $expiration,
             ) );
         }
-        if( !$this->transaction->isStarted() ) {
-            $this->_setMulti($arr, $expiration);
-        } else {
+
+        if ($this->transaction->isStarted()) {
             $this->transaction->logMulti($items, $expiration);
+        } else {
+            $this->_setMulti($arr, $expiration);
         }
     }
 
@@ -369,25 +369,24 @@ class SFM_Cache implements SFM_Interface_Singleton//, Interface_Cacher
         return md5($this->projectPrefix.self::KEY_DILIMITER.$key);
     }
 
-    protected function beginTransaction()
+    public function beginTransaction()
     {
         $timer = SFM_Monitor::get()->createTimer(array('db' => 'memcached', 'operation' => 'beginTransaction'));
         $this->transaction->begin();
         $timer->stop();
     }
 
-    protected function commitTransaction()
+    public function commitTransaction()
     {
         $timer = SFM_Monitor::get()->createTimer(array('db' => 'memcached', 'operation' => 'commitTransaction'));
         $this->transaction->commit();
         $timer->stop();
     }
 
-    protected function rollbackTransaction()
+    public function rollbackTransaction()
     {
         $timer = SFM_Monitor::get()->createTimer(array('db' => 'memcached', 'operation' => 'rollbackTransaction'));
         $this->transaction->rollback();
         $timer->stop();
     }
 }
-?>

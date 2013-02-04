@@ -7,7 +7,7 @@
  *
  */
 require_once 'SFM/Exception/Aggregate.php';
-abstract class SFM_Aggregate extends SFM_Business implements Iterator, Countable
+abstract class SFM_Aggregate extends SFM_Business implements Iterator, Countable, SFM_Transaction_Restorable
 {
     /**
      * __wakeup load all object by id 
@@ -53,6 +53,8 @@ abstract class SFM_Aggregate extends SFM_Business implements Iterator, Countable
      * @var SFM_Mapper
      */
     protected $mapper;
+
+    protected $objectState = array();
 
     /**
      * Constructor
@@ -174,8 +176,18 @@ abstract class SFM_Aggregate extends SFM_Business implements Iterator, Countable
         }
     }
 
+    protected function saveObjectState()
+    {
+        $this->objectState = array(
+            'loadedListEntityId' => $this->loadedListEntityId,
+            'listEntityId'       => $this->listEntityId
+        );
+    }
+
     public function push(SFM_Entity $entity)
     {
+        $this->saveObjectState();
+
         $this->entities[$entity->getId()] = $entity;
         if (!in_array($entity->getId(), $this->listEntityId)) {
             array_push($this->listEntityId, $entity->getId());
@@ -188,6 +200,8 @@ abstract class SFM_Aggregate extends SFM_Business implements Iterator, Countable
 
     public function unshift(SFM_Entity $entity)
     {
+        $this->saveObjectState();
+
         $this->entities[$entity->getId()] = $entity;
         if (!in_array($entity->getId(), $this->listEntityId)) {
             array_unshift($this->listEntityId, $entity->getId());
@@ -200,19 +214,31 @@ abstract class SFM_Aggregate extends SFM_Business implements Iterator, Countable
 
     public function remove(SFM_Entity $entity)
     {
+        $this->saveObjectState();
+
         $entityKey = array_search($entity, $this->entities);
         if ($entityKey !== false) {
-            array_splice($this->entities, $entityKey, 1);
+            $this->splice($this->entities, $entityKey, 1);
         }
         $entityIdKey = array_search($entity->getId(), $this->listEntityId);
         if($entityIdKey !== false) {
-            array_splice($this->listEntityId, $entityIdKey, 1);
+            $this->splice($this->listEntityId, $entityIdKey, 1);
         }
         $entityLoadedKey = array_search($entity->getId(), $this->loadedListEntityId);
         if ($entityLoadedKey !== false) {
-            array_splice($this->loadedListEntityId, $entityLoadedKey, 1);
+            $this->splice($this->loadedListEntityId, $entityLoadedKey, 1);
         }
+
         $this->mapper->updateAggregate($this);
+    }
+
+    protected function splice(&$array, $offset, $length)
+    {
+        $return = array_slice($array, $offset, $length, true);
+        foreach ($return as $key => $value) {
+            unset($array[$key]);
+        }
+        return $return;
     }
 
     /**
@@ -559,5 +585,23 @@ abstract class SFM_Aggregate extends SFM_Business implements Iterator, Countable
         $sortedEntityIds = array_slice($entityIds,$offset - 1,count($entityIds) - ($offset - 1));
         $sortedEntityIds = array_merge($sortedEntityIds,array_slice($entityIds,0,$offset - 1));
         return $this->mapper->createAggregate($sortedEntityIds,null,true);
+    }
+
+    public function getObjectIdentifier()
+    {
+        $identifier = $this->getCacheKey() ? $this->getCacheKey() : spl_object_hash($this);
+
+        return $identifier;
+    }
+
+    public function getObjectState()
+    {
+        return $this->objectState;
+    }
+
+    public function restoreObjectState($state)
+    {
+        $this->listEntityId = $state['listEntityId'];
+        $this->loadedListEntityId = $state['loadedListEntityId'];
     }
 }

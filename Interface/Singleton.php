@@ -7,4 +7,3 @@ interface SFM_Interface_Singleton
     */
     public static function getInstance();
 }
-?>

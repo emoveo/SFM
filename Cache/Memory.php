@@ -5,7 +5,7 @@ require_once 'SFM/Cache.php';
 /**
  *  Class for work with Memcached in memory. Implements tags system for cache control
  */
-class SFM_Cache_Memory extends SFM_Cache 
+class SFM_Cache_Memory extends SFM_Cache implements SFM_Transaction_Engine
 {
     /**
      *
@@ -55,10 +55,30 @@ class SFM_Cache_Memory extends SFM_Cache
         
         return $resultValue;
     }
-    
-    public function setRaw($key,$value,$expiration = 0)
+
+    /**
+     * @param string $key
+     * @param mixed $value
+     * @param int $expiration
+     * @return bool
+     */
+    public function setRaw($key, $value, $expiration = 0)
     {
-        return $this->driver->set($this->generateKey($key), $value, $expiration);
+        $cacheKey = $this->generateKey($key);
+
+        if ($this->transaction->isStarted()) {
+            $result = $this->transaction->logRaw($cacheKey, $value, $expiration);
+        } else {
+            $result = $this->driver->set($cacheKey, $value, $expiration);
+        }
+
+        return $result;
+    }
+
+    public function setValue($key, SFM_Value_Abstract $value, $expiration = 0)
+    {
+        $this->setRaw($key, $value->get(), $expiration);
+        $this->transaction->logResetable($value);
     }
     
     public function getRaw($key)

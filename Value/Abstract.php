@@ -5,15 +5,31 @@
  *
  * @author andry
  */
-abstract class SFM_Value_Abstract
+abstract class SFM_Value_Abstract implements SFM_Transaction_Restorable
 {
     protected $value;
     protected $expiration = 0;
+    protected $objectState;
     
     /**
      * Load from storage 
      */
     protected abstract function load();
+
+    public function restoreObjectState($state)
+    {
+        $this->value = $state;
+    }
+
+    public function getObjectState()
+    {
+        return $this->objectState;
+    }
+
+    public function getObjectIdentifier()
+    {
+        return $this->getCacheKey();
+    }
     
     public function get()
     {
@@ -30,8 +46,9 @@ abstract class SFM_Value_Abstract
     
     protected function set( $value )
     {
+        $this->objectState = $this->value;
         $this->value = $value;
-        SFM_Cache_Memory::getInstance()->setRaw($this->getCacheKey(), $this->value, $this->expiration);
+        SFM_Cache_Memory::getInstance()->setValue($this->getCacheKey(), $this, $this->expiration);
         return $this->value;
     }
     

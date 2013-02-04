@@ -3,6 +3,7 @@ require_once 'SFM/Business.php';
 require_once 'SFM/Entity.php';
 require_once 'SFM/Aggregate.php';
 require_once 'SFM/Cache/Memory.php';
+require_once 'SFM/IdentityMap/Interface.php';
 require_once 'SFM/IdentityMap.php';
 
 require_once 'SFM/Exception/Mapper.php';
@@ -252,8 +253,7 @@ abstract class SFM_Mapper
         }
         if ($entity === null) {
             $entity = new $className($proto, $this);
-
-            SFM_IdentityMap::addEntity($entity);
+            SFM_IdentityMap::getInstance()->addEntity($entity);
         }
         return $entity;
     }
@@ -284,8 +284,9 @@ abstract class SFM_Mapper
         $sql = "UPDATE ".SFM_DB::getInstance()->quoteIdentifier($this->tableName, true)." SET " . implode(',', $updates) . " WHERE {$this->idField}=:{$this->idField}";
 
         $state = SFM_DB::getInstance()->update($sql, $params);
+
         //replace in indentityMap
-        SFM_IdentityMap::addEntity($entity);
+        SFM_IdentityMap::getInstance()->addEntity($entity);
         //Then save to Cache. Tags will be reset automatically
         if ($entity->isCacheable()) {
             $this->saveCached($entity);
@@ -342,7 +343,7 @@ abstract class SFM_Mapper
     public function deleteEntity(SFM_Entity $entity)
     {
         //delete from identity map
-        SFM_IdentityMap::deleteEntity($entity);
+        SFM_IdentityMap::getInstance()->deleteEntity($entity);
         //delete from Cache
         $Cache = SFM_Cache_Memory::getInstance();
         $Cache->delete($entity->getCacheKey());
@@ -792,7 +793,7 @@ abstract class SFM_Mapper
      */
     protected function getEntityFromIdentityMap($className, $id)
     {
-        return SFM_IdentityMap::getEntity($className, $id);
+        return SFM_IdentityMap::getInstance()->getEntity($className, $id);
     }
 
     /**

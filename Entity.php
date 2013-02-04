@@ -4,7 +4,7 @@ require_once 'SFM/Business.php';
  * Abstract class for single Business object
  * 
  */
-abstract class SFM_Entity extends SFM_Business 
+abstract class SFM_Entity extends SFM_Business implements SFM_Transaction_Restorable
 {
     /**
      * Prototype array - contains information about Business object (actually, it is retreived from DB with help of any Data Mapper)
@@ -132,6 +132,8 @@ abstract class SFM_Entity extends SFM_Business
             }
         }
 
+        $this->objectState = $this->proto;
+
         //@TODO rewrite without clone
         if(empty($params))
             return true;
@@ -168,14 +170,14 @@ abstract class SFM_Entity extends SFM_Business
      */
     public function updateSafe(array $params)
     {
-        $db = SFM_DB::getInstance();
+        $db = SFM_Transaction::getInstance();
         try {
             $db->beginTransaction();
             $result = $this->update($params);
-            $db->commit();
+            $db->commitTransaction();
             return $result;
         } catch(Zend_Db_Exception $e) {
-            $db->rollBack();
+            $db->rollbackTransaction();
             throw $e;
         }
     }
@@ -197,14 +199,14 @@ abstract class SFM_Entity extends SFM_Business
      */
     public function deleteSafe()
     {
-        $db = SFM_DB::getInstance();
+        $db = SFM_Transaction::getInstance();
         try {
             $db->beginTransaction();
             $result = $this->delete();
-            $db->commit();
+            $db->commitTransaction();
             return $result;
         } catch(Zend_Db_Exception $e) {
-            $db->rollBack();
+            $db->rollbackTransaction();
             throw $e;
         }
     }
@@ -273,6 +275,24 @@ abstract class SFM_Entity extends SFM_Business
     public function toArray()
     {
         return array('entity' => $this);
-    } 
-    
+    }
+
+    protected $objectState;
+
+    public function getObjectState()
+    {
+        return $this->objectState;
+    }
+
+    public function restoreObjectState($proto)
+    {
+        $this->proto = $proto;
+    }
+
+    public function getObjectIdentifier()
+    {
+        $identifier = $this->getCacheKey() ? $this->getCacheKey() : spl_object_hash($this);
+        
+        return $identifier;
+    }
 }

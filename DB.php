@@ -6,19 +6,13 @@ require_once 'SFM/Exception/DB.php';
  * Database abstract layer class. Based on PDO
  *
  */
-class SFM_DB implements SFM_Interface_Singleton
+class SFM_DB implements SFM_Interface_Singleton, SFM_Transaction_Engine
 {
     /**
     * DB object
     * @var array
     */
     private static $instances = array();
-
-    /**
-     * PDO object
-     * @var PDO
-     */
-    private $pdo = null;
     
     /**
      * 
@@ -192,35 +186,21 @@ class SFM_DB implements SFM_Interface_Singleton
      */
     private function query($sql, $vars)
     {
-        //echo "\n {$sql} ".var_export($vars, true);
-        /*$stmt = $this->pdo->prepare($sql);
-        if( false === $stmt ) {
-            //PDO throw excetions if only database connection problems
-            throw new SFM_Exception_DB('PDO prepair error with sql - '.$sql); 
-        }
-        foreach ($vars as $key => $value) {
-            $stmt->bindValue($key, $value);
-        }
-        if (!$stmt->execute()) {
-            throw new SFM_Exception_DB('Error occured while running sql: ' . var_export($stmt->errorInfo(), true));
-        }
-        return $stmt;*/
-        //Reflection::export(new ReflectionObject(/*'getQuoteIdentifierSymbol',*/$this->_db));
-        //var_dump($this->_db->getQuoteIdentifierSymbol());
         return $this->_db->query($sql, $vars);
     }
-    
+
     /**
-     * @param string $sql
-     * @param array $vars
-     * @param string|null $tableName it is necessary for postgres to generate last sequence id
-     *
+     * @param $sql
+     * @param $vars
+     * @param null $tableName $tableName it is necessary for postgres to generate last sequence id
+     * @param string $idFieldName
+     * @param bool $isIdAutoincrement
+     * @return string
      */
-    
-    public function insert($sql, $vars, $tableName = null, $idFieldName = 'id',$isIdAutoincrement = true)
+    public function insert($sql, $vars, $tableName = null, $idFieldName = 'id', $isIdAutoincrement = true)
     {
         $timer = SFM_Monitor::get()->createTimer(array('db' => 'sql', 'operation' => 'insert'));
-        $stmt = $this->query($sql, $vars);
+        $this->query($sql, $vars);
         $timer->stop();
         if($isIdAutoincrement){
             return $this->_db->lastInsertId($tableName,$idFieldName);    
@@ -245,39 +225,48 @@ class SFM_DB implements SFM_Interface_Singleton
      */
     public function beginTransaction()
     {
-        if($this->_transactionLevel == 0) {
+        $result = true;
+        if ($this->_transactionLevel == 0) {
             $timer = SFM_Monitor::get()->createTimer(array('db' => 'sql', 'operation' => 'beginTransaction'));
             $this->_transactionLevel++;
             $this->_db->beginTransaction();
             $timer->stop();
-            return true;
         } else {
-            return false;
+            $result = false;
         }
+
+        return $result;
     }
     
     /**
+     * Commit transaction
      * @return bool
+     * @throws SFM_Exception_DB
      */
-    public function commit()
+    public function commitTransaction()
     {
-        if($this->_transactionLevel < 0)
+        if ($this->_transactionLevel < 0) {
             throw new SFM_Exception_DB('Commit without begin occured');
+        }
+
+        $result = true;
         $this->_transactionLevel--;
-        if($this->_transactionLevel == 0) {
+        if ($this->_transactionLevel == 0) {
             $timer = SFM_Monitor::get()->createTimer(array('db' => 'sql', 'operation' => 'commitTransaction'));
             $this->_db->commit();
             $timer->stop();
-            return true;
         } else {
-            return false;
+            $result = false;
         }
+
+        return $result;
     }
+
     /**
-     * Rollback stops all transactions, including nested ones
+     * Rollback transactions
      * @return bool
      */
-    public function rollBack()
+    public function rollbackTransaction()
     {
         //only if any transaction is started and was not rollbacked
         if($this->_transactionLevel != 0) {
@@ -290,13 +279,30 @@ class SFM_DB implements SFM_Interface_Singleton
             return false;
         }
     }
-    
-    /**
-     *  @return void 
-     *
-     */
+
     public function setProfiler($profiler)
     {
         $this->_db->setProfiler($profiler); 
+    }
+
+    /**
+     * Commit transaction
+     * @deprecated
+     * @return bool
+     * @throws SFM_Exception_DB
+     */
+    public function commit()
+    {
+        return $this->commitTransaction();
+    }
+
+    /**
+     * Rollback transactions
+     * @deprecated
+     * @return bool
+     */
+    public function rollBack()
+    {
+        return $this->rollbackTransaction();
     }
 }
