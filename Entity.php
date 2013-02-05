@@ -156,7 +156,7 @@ abstract class SFM_Entity extends SFM_Business implements SFM_Transaction_Restor
                     }
                 }
             } else {
-                unset($params[$key]);
+                throw new SFM_Exception_EntityIntegrity($this, $key);
             }                
         }
         $this->mapper->updateUniqueFields($this, $oldEntity);

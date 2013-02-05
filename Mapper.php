@@ -384,20 +384,19 @@ abstract class SFM_Mapper
         if($this->isIdAutoIncrement()){
             unset($proto[$this->idField]);
         }
-        //$inserts = array();
+
         $keys = array();
         $values = array();
         foreach ($proto as $key => $value) {
-            //$inserts []= "{$key}=:{$key}";
             $keys[] = $key;
             $values[] = ':'.$key;
         }
 
-        //$sql = "INSERT INTO {$this->tableName} SET " . implode(',', $inserts);
         $sql = "INSERT INTO "
              . SFM_DB::getInstance()->quoteIdentifier($this->tableName, true)
              . ' (' . implode(', ', $keys) . ') '
              . 'VALUES (' . implode(', ', $values) . ')';
+        
         return $this->getEntityById( SFM_DB::getInstance()->insert($sql, $proto, $this->tableName,$this->idField,$this->isIdAutoIncrement()) );
     }
 
