@@ -10,6 +10,8 @@ class SFM_Entity_Handler implements SFM_Entity_HandlerInterface
     /** @var string[] */
     protected $errors = array();
 
+    protected $requiredFields = array();
+
     protected $alreadyServedContext = array();
 
     /**
@@ -17,7 +19,7 @@ class SFM_Entity_Handler implements SFM_Entity_HandlerInterface
      * @param Zend_Filter $filter
      * @return static
      */
-    protected function addFilter($field, $filter)
+    public function addFilter($field, $filter)
     {
         if (false === isset($this->filters[$field])) {
             $this->filters[$field] = array();
@@ -49,11 +51,35 @@ class SFM_Entity_Handler implements SFM_Entity_HandlerInterface
     }
 
     /**
+     * @param array $fields
+      * @return static
+     */
+    public function addRequiredFields($fields = array())
+    {
+        foreach ($fields as $field) {
+            $this->addRequiredField($field);
+        }
+
+        return $this;
+    }
+
+    /**
+     * @param string $field
+     * @return static
+     */
+    public function addRequiredField($field)
+    {
+        $this->requiredFields[] = $field;
+
+        return $this;
+    }
+
+    /**
      * @param string $field
      * @param Zend_Validate $validator
      * @return static
      */
-    protected function addValidator($field, $validator)
+    public function addValidator($field, $validator)
     {
         if (false === isset($this->filters[$field])) {
             $this->validators[$field] = array();
@@ -121,6 +147,10 @@ class SFM_Entity_Handler implements SFM_Entity_HandlerInterface
 
             $key = isset($bindings[$field]) ? $bindings[$field] : $field;
 
+            if (false === in_array($key, $this->requiredFields) && empty($value)) {
+                continue;
+            }
+
             if (isset ($this->validators[$key])) {
 
                 /** @var $validator Zend_Validate */
@@ -136,7 +166,6 @@ class SFM_Entity_Handler implements SFM_Entity_HandlerInterface
                     }
 
                 }
-                $data[$field] = $value;
             }
 
         }

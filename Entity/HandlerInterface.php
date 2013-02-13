@@ -26,6 +26,14 @@ interface SFM_Entity_HandlerInterface
     public function validate(array $data, $bindings = array());
 
     /**
+     * Add filter
+     * @param string $field
+     * @param Zend_Filter $filter
+     * @return static
+     */
+    public function addFilter($field, $filter);
+
+    /**
      * Add filters
      * @param array $fields Filters config
      * @return static
@@ -33,11 +41,31 @@ interface SFM_Entity_HandlerInterface
     public function addFilters($fields = array());
 
     /**
+     * Add validator
+     * @param string $field
+     * @param Zend_Validate $validator
+     * @return static
+     */
+    public function addValidator($field, $validator);
+
+    /**
      * Add validators
      * @param array $fields Validators config
      * @return static
      */
     public function addValidators($fields = array());
+
+    /**
+     * @param array $fields
+     * @return static
+     */
+    public function addRequiredFields($fields = array());
+
+    /**
+     * @param string $field
+     * @return static
+     */
+    public function addRequiredField($field);
 
     /**
      * Get errors
