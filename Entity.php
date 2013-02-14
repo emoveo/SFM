@@ -123,7 +123,7 @@ abstract class SFM_Entity extends SFM_Business implements SFM_Transaction_Restor
      * @return mixed ID of updated entity in case of successful update, false - overwise
      * @throws SFM_Exception_EntityValidation
      */
-    public function update(array $params, $makeValidation = true)
+    public function update(array $params = array(), $makeValidation = true)
     {
         if ($makeValidation && self::getEntityHandler() instanceof SFM_Entity_HandlerInterface) {
             $params = self::getEntityHandler()->handle($params);

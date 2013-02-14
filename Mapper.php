@@ -827,8 +827,11 @@ abstract class SFM_Mapper
      * @return mixed
      * @throws SFM_Exception_LazyLoad
      */
-    public function lazyload(SFM_Business $business, $fieldName)
+    public function lazyload($business, $fieldName)
     {
+        if (false === $business instanceof SFM_Business) {
+            throw new SFM_Exception_LazyLoad("Object `$business` is not instance of `SFM_Business` class");
+        }
 
         if ($business instanceof SFM_Entity) {
             if (substr($fieldName, -3) == '_id') {
