@@ -5,7 +5,7 @@ require_once 'SFM/Cache.php';
 /**
  *  Class for work with Memcached in memory. Implements tags system for cache control
  */
-class SFM_Cache_Memory extends SFM_Cache implements SFM_Transaction_Engine
+class SFM_Cache_Memory extends SFM_Cache implements SFM_Transaction_Engine, SFM_Cache_Interface
 {
     /**
      *
@@ -17,9 +17,11 @@ class SFM_Cache_Memory extends SFM_Cache implements SFM_Transaction_Engine
     {
         $Config = Zend_Registry::get(Application::CONFIG_NAME);
         $projectPrefix = '';
-        if($Config->memcachedAPI->projectPrefix)
+        if ($Config->memcachedAPI->projectPrefix) {
             $projectPrefix = $Config->memcachedAPI->projectPrefix;
-        parent::__construct($Config->memcachedAPI->defaultMemory->host, $Config->memcachedAPI->defaultMemory->port,$projectPrefix,$Config->memcached->disable);
+        }
+
+        parent::__construct($Config->memcachedAPI->defaultMemory->host, $Config->memcachedAPI->defaultMemory->port, $projectPrefix, $Config->memcached->disable);
     }
     
     /**
@@ -34,45 +36,6 @@ class SFM_Cache_Memory extends SFM_Cache implements SFM_Transaction_Engine
         }
         
         return self::$instance;
-    }
-    
-    public function cas(SFM_Business $value)
-    {
-        do {
-            $resultValue = $this->driver->get($key, null, $cas);
-            if($this->driver->getResultCode() == Memcached::RES_NOTFOUND) {
-                $this->set($value);
-            } else {
-                //copypatse from SFM_Cache::set
-                $arr = array(
-                    self::KEY_VALUE => serialize($value),
-                    self::KEY_TAGS  => $this->getTags($value->getCacheTags()),
-                );        
-                //\copypaste
-                $this->driver->cas($cas,$this->generateKey($value->getCacheKey()), $arr, $expiration);
-            }
-        } while ($this->driver->getResultCode() != Memcached::RES_SUCCESS);
-        
-        return $resultValue;
-    }
-
-    /**
-     * @param string $key
-     * @param mixed $value
-     * @param int $expiration
-     * @return bool
-     */
-    public function setRaw($key, $value, $expiration = 0)
-    {
-        $cacheKey = $this->generateKey($key);
-
-        if ($this->transaction->isStarted()) {
-            $result = $this->transaction->logRaw($cacheKey, $value, $expiration);
-        } else {
-            $result = $this->driver->set($cacheKey, $value, $expiration);
-        }
-
-        return $result;
     }
 
     public function setValue($key, SFM_Value_Abstract $value, $expiration = 0)

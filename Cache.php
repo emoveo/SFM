@@ -6,7 +6,7 @@ require_once 'SFM/Exception/Memcached.php';
 /**
  *  Class for work with daemons that use memcache protocol. Implements tags system for cache control
  */
-class SFM_Cache implements SFM_Interface_Singleton//, Interface_Cacher 
+class SFM_Cache implements SFM_Interface_Singleton
 {
     const KEY_DILIMITER = '@';
 
@@ -53,7 +53,7 @@ class SFM_Cache implements SFM_Interface_Singleton//, Interface_Cacher
                 $this->driver->setOption(Memcached::OPT_COMPRESSION, true);
         }
 
-        $this->transaction = new SFM_Cache_Transaction($this->driver);
+        $this->transaction = new SFM_Cache_Transaction($this);
     }
 
     /**
@@ -84,7 +84,7 @@ class SFM_Cache implements SFM_Interface_Singleton//, Interface_Cacher
         }
         $result = $this->getValidObject($arr);
         if($result === null) {
-            //If the object is invalid, remove it from cache 
+            //If the object is invalid, remove it from cache
             $this->delete($key);
         }
         return $result;
@@ -98,12 +98,9 @@ class SFM_Cache implements SFM_Interface_Singleton//, Interface_Cacher
     public function getMulti( array $keys )
     {
         $values = $this->_getMulti($keys);
-//      Deep_Logger::getInstance()->debug( 'getMulti' );
-//        echo 'sd';
         $result = array();
         if( false != $values ) {
             foreach ($values as $item) {
-//              var_dump(unserialize($item));
                 $obj = $this->getValidObject(unserialize($item));
                 if( null != $obj) {
                     $result[] = $obj;
@@ -127,19 +124,38 @@ class SFM_Cache implements SFM_Interface_Singleton//, Interface_Cacher
      */
     public function set(SFM_Business $value)
     {
-        $arr = array(
-            self::KEY_VALUE => serialize($value),
-            self::KEY_TAGS  => $this->getTags($value->getCacheTags()),
-            self::KEY_EXPIRES  => $value->getExpires(),
-        );
-
         if ($this->transaction->isStarted()) {
             $this->transaction->logBusiness($value);
         } else {
-            $this->_set($value->getCacheKey(), $arr, $value->getExpires());
+
+            $data = array(
+                self::KEY_VALUE => serialize($value),
+                self::KEY_TAGS  => $this->getTags($value->getCacheTags()),
+                self::KEY_EXPIRES  => $value->getExpires(),
+            );
+
+            $this->_set($value->getCacheKey(), $data, $value->getExpires());
         }
     }
 
+    /**
+     * @param string $key
+     * @param mixed $value
+     * @param int $expiration
+     * @return bool
+     */
+    public function setRaw($key, $value, $expiration = 0)
+    {
+        $key = $this->generateKey($key);
+
+        if ($this->transaction->isStarted()) {
+            $result = $this->transaction->logRaw($key, $value, $expiration);
+        } else {
+            $result = $this->driver->set($key, $value, $expiration);
+        }
+
+        return $result;
+    }
 
     /**
      * Wrapper to SetMulti
@@ -150,18 +166,20 @@ class SFM_Cache implements SFM_Interface_Singleton//, Interface_Cacher
      */
     public function setMulti(array $items, $expiration=0)
     {
-        $arr = array();
-        foreach ($items as $businessObj) {
-            $arr[$businessObj->getCacheKey()] = serialize( array(
-                self::KEY_VALUE => serialize($businessObj),
-                self::KEY_TAGS  => $this->getTags($businessObj->getCacheTags()),
-                self::KEY_EXPIRES  => $expiration,
-            ) );
-        }
-
         if ($this->transaction->isStarted()) {
             $this->transaction->logMulti($items, $expiration);
         } else {
+
+            $arr = array();
+            /** @var $businessObj SFM_Business */
+            foreach ($items as $businessObj) {
+                $arr[$businessObj->getCacheKey()] = serialize( array(
+                    self::KEY_VALUE => serialize($businessObj),
+                    self::KEY_TAGS  => $this->getTags($businessObj->getCacheTags()),
+                    self::KEY_EXPIRES  => $expiration,
+                ));
+           }
+
             $this->_setMulti($arr, $expiration);
         }
     }
@@ -349,17 +367,10 @@ class SFM_Cache implements SFM_Interface_Singleton//, Interface_Cacher
         $oldTagValues = (array) $raw[self::KEY_TAGS];
 
         $newTagValues = $this->getTags(array_keys($oldTagValues));
-//        echo "<br><br>Get by key :<br>";var_dump($value);echo "<br>";var_dump($oldTagValues);var_dump($newTagValues); echo "<br><br>";
         //expiration objects should expire without tags
         if($oldTagValues == $newTagValues || $raw[self::KEY_EXPIRES]) {
-            /**
-             * unserialize ONLY after tags comparison to except useless work
-             * @see SFM_Aggregate __wakeup
-             */
-//            echo '<br>getValidObject - yes<br>';
             return unserialize($raw[self::KEY_VALUE]);
         } else {
-//            echo " <br>EMpty cache";
             return null;
         }
     }

@@ -16,23 +16,24 @@ class SFM_Cache_Transaction
     /** @var array Resetable objects */
     protected $resetableLog;
 
-     /**
-     * @var Memcached Memcached object
-     */
-    protected $driver;
-    
+     /** @var \SFM_Cache */
+    protected $cache;
+
     protected $isStarted = false;
 
-    public function __construct($driver)
+    public function __construct(SFM_Cache_Interface $cache)
     {
-        $this->driver = $driver;
+        $this->cache = $cache;
     }
-    
+
+    /**
+     * @return bool
+     */
     public function isStarted()
     {
         return $this->isStarted;
     }
-    
+
     public function begin()
     {
         $this->isStarted = true;
@@ -43,25 +44,31 @@ class SFM_Cache_Transaction
     
     public function commit()
     {
-        foreach ( $this->log as $expiration=>$val ) {
-            $this->driver->setMulti($val, $expiration);
+        $this->isStarted = false;
+
+        foreach ($this->log as $expiration => $items) {
+            $this->cache->setMulti($items, $expiration);
         }
 
         foreach ($this->rawLog as $key => $logItem) {
-            $this->driver->set($key, $logItem['value'], $logItem['expiration']);
+            $this->cache->setRaw($key, $logItem['value'], $logItem['expiration']);
         }
     }
     
     public function rollback()
     {
+        $this->isStarted = false;
+
         foreach ($this->resetableLog as $value) {
-            $value['object']->restoreObjectState($value['state']);
+
+            /** @var $object SFM_Transaction_Restorable */
+            $object = $value['object'];
+            $object->restoreObjectState($value['state']);
         }
     }
     
     public function logBusiness(SFM_Business $value)
     {
-        //group by expire for simple multiSet
         $this->log[$value->getExpires()][] =  $value;
         $this->logResetable($value);
     }
@@ -84,12 +91,11 @@ class SFM_Cache_Transaction
     }
     
     /*
-     * @param array[SFM_Entities] $items
+     * @param SFM_Business[] $items
      * @param int $expiration
      */
-    public function logMulti(array $items, $expiration=0)
+    public function logMulti(array $items, $expiration = 0)
     {
-        //group by expire for simple multiSet
         foreach ($items as $obj) {
             $this->log[$expiration][] = $obj;
         }
