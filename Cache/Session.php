@@ -5,7 +5,7 @@ require_once 'SFM/Cache.php';
 /**
  *  Class for work with Sessions in memory. It is just like SFM_Cache_Memory
  */
-class SFM_Cache_Session extends SFM_Cache 
+class SFM_Cache_Session extends SFM_Cache implements SFM_Cache_Interface
 {
     /**
      *
