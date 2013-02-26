@@ -45,12 +45,13 @@ abstract class SFM_Entity extends SFM_Business implements SFM_Transaction_Restor
      */
     public static function getEntityHandler()
     {
-        if (is_null(static::$entityHandler)) {
-            static::$entityHandler = new SFM_Entity_Handler();
-            static::configure(static::$entityHandler);
+        $class = get_called_class();
+        if (false === isset(self::$entityHandler[$class])) {
+            self::$entityHandler[$class] = new SFM_Entity_Handler();
+            static::configure(self::$entityHandler[$class]);
         }
 
-        return static::$entityHandler;
+        return self::$entityHandler[$class];
     }
 
     /**
