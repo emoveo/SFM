@@ -1,4 +1,5 @@
 <?php
-class SFM_Exception_Back extends Exception
-{}
-?>
+class SFM_Exception_Back extends SFM_Exception_Abstract
+{
+
+}

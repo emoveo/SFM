@@ -38,7 +38,7 @@ class SFM_DB implements SFM_Interface_Singleton, SFM_Transaction_Engine
             $connectionConfig = $config->database->{$connectionName};
 
             if (is_null($connectionConfig)) {
-                throw new SFM_Exception_DB("Connection `{$connectionName}` is not exist");
+                throw new SFM_Exception_DB("Connection is not exist", array('connectionName' => $connectionName));
             }
 
             $this->_db = Zend_Db::factory($connectionConfig->driver, $connectionConfig->params);
@@ -47,7 +47,7 @@ class SFM_DB implements SFM_Interface_Singleton, SFM_Transaction_Engine
             }
             
         } catch (Zend_Db_Exception $e) {
-            throw new SFM_Exception_DB('Error while connecting to db. '.$e->getMessage());
+            throw new SFM_Exception_DB('Error while connecting to db', array('error' => $e->getMessage()));
         }
 
     }
@@ -182,11 +182,24 @@ class SFM_DB implements SFM_Interface_Singleton, SFM_Transaction_Engine
      *
      * @param string $sql SQL query with placeholders
      * @param array $vars Array of variables
+     * @throws SFM_Exception_DB
      * @return PDOStatement
      */
     private function query($sql, $vars)
     {
-        return $this->_db->query($sql, $vars);
+        try {
+            $result = $this->_db->query($sql, $vars);
+        } catch (Zend_Db_Exception $e) {
+
+            $context = array(
+                'message' => $e->getMessage(),
+                'sql'     => $sql,
+                'vars'    => $vars
+            );
+            throw new SFM_Exception_DB("Query error", $context, $e);
+        }
+
+        return $result;
     }
 
     /**
@@ -229,7 +242,17 @@ class SFM_DB implements SFM_Interface_Singleton, SFM_Transaction_Engine
         if ($this->_transactionLevel == 0) {
             $timer = SFM_Monitor::get()->createTimer(array('db' => 'sql', 'operation' => 'beginTransaction'));
             $this->_transactionLevel++;
-            $this->_db->beginTransaction();
+
+            try {
+                $this->_db->beginTransaction();
+            } catch (Zend_Db_Exception $e) {
+
+                $context = array(
+                    'message' => $e->getMessage()
+                );
+                throw new SFM_Exception_DB("Transaction begin error", $context, $e);
+            }
+
             $timer->stop();
         } else {
             $result = false;
@@ -253,7 +276,17 @@ class SFM_DB implements SFM_Interface_Singleton, SFM_Transaction_Engine
         $this->_transactionLevel--;
         if ($this->_transactionLevel == 0) {
             $timer = SFM_Monitor::get()->createTimer(array('db' => 'sql', 'operation' => 'commitTransaction'));
-            $this->_db->commit();
+
+            try {
+                $this->_db->commit();
+            } catch (Zend_Db_Exception $e) {
+
+                $context = array(
+                    'message' => $e->getMessage()
+                );
+                throw new SFM_Exception_DB("Transaction commit error", $context, $e);
+            }
+
             $timer->stop();
         } else {
             $result = false;
@@ -272,7 +305,17 @@ class SFM_DB implements SFM_Interface_Singleton, SFM_Transaction_Engine
         if($this->_transactionLevel != 0) {
             $this->_transactionLevel = 0;
             $timer = SFM_Monitor::get()->createTimer(array('db' => 'sql', 'operation' => 'rollbackTransaction'));
-            $this->_db->rollBack();
+
+            try {
+                $this->_db->rollBack();
+            } catch (Zend_Db_Exception $e) {
+
+                $context = array(
+                    'message' => $e->getMessage()
+                );
+                throw new SFM_Exception_DB("Transaction rollback error", $context, $e);
+            }
+
             $timer->stop();
             return true;
         } else {
