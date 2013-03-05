@@ -21,6 +21,7 @@ abstract class SFM_Entity extends SFM_Business implements SFM_Transaction_Restor
     /** @var SFM_Entity_HandlerInterface */
     protected static $entityHandler;
 
+    protected $objectState;
 
     /**
      * Constructor
@@ -30,6 +31,8 @@ abstract class SFM_Entity extends SFM_Business implements SFM_Transaction_Restor
     {
         $this->proto = $proto;
         $this->mapper = $mapper;
+
+        SFM_Injector::inject($this);
     }
 
     /**
@@ -221,6 +224,8 @@ abstract class SFM_Entity extends SFM_Business implements SFM_Transaction_Restor
     {
         $mapperClassName = str_replace('Entity', 'Mapper', get_class($this));
         $this->mapper = call_user_func(array($mapperClassName, 'getInstance'));
+
+        SFM_Injector::inject($this);
     }
     
     /**
@@ -277,8 +282,6 @@ abstract class SFM_Entity extends SFM_Business implements SFM_Transaction_Restor
     {
         return array('entity' => $this);
     }
-
-    protected $objectState;
 
     public function getObjectState()
     {

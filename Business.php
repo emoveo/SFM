@@ -26,6 +26,18 @@ abstract class SFM_Business
      * @var integer
      */
     protected $_expires = 0;
+
+    /** @var \Symfony\Component\DependencyInjection\ContainerInterface */
+    protected $container;
+
+    /**
+     * Inject DI container
+     * @param Symfony\Component\DependencyInjection\ContainerInterface $container
+     */
+    public function setContainer(\Symfony\Component\DependencyInjection\ContainerInterface $container = null)
+    {
+        $this->container = $container;
+    }
     
     /**
      * Returns key for storing in Cache.
