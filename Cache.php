@@ -34,7 +34,6 @@ class SFM_Cache implements SFM_Interface_Singleton
      */
     protected $transaction;
 
-
     protected function __construct($host, $port, $projectPrefix = '', $disable = false)
     {
         //check fake mode
@@ -78,15 +77,20 @@ class SFM_Cache implements SFM_Interface_Singleton
      */
     public function get($key)
     {
-        $arr = unserialize($this->_get($key));
-        if (!is_array($arr)) {
-            return null;
+        if ($this->transaction->isStarted() && $this->transaction->isKeyDeleted($key)) {
+            $result = null;
+        } else {
+            $arr = unserialize($this->_get($key));
+            if (!is_array($arr)) {
+                return null;
+            }
+            $result = $this->getValidObject($arr);
+            if($result === null) {
+                //If the object is invalid, remove it from cache
+                $this->_delete($key);
+            }
         }
-        $result = $this->getValidObject($arr);
-        if($result === null) {
-            //If the object is invalid, remove it from cache
-            $this->delete($key);
-        }
+
         return $result;
     }
 
@@ -97,6 +101,14 @@ class SFM_Cache implements SFM_Interface_Singleton
      */
     public function getMulti( array $keys )
     {
+        if ($this->transaction->isStarted()) {
+            foreach ($keys as $i => $key) {
+                if ($this->transaction->isKeyDeleted($key)) {
+                    unset($keys[$i]);
+                }
+            }
+        }
+
         $values = $this->_getMulti($keys);
         $result = array();
         if( false != $values ) {
@@ -192,7 +204,14 @@ class SFM_Cache implements SFM_Interface_Singleton
      */
     public function delete($key)
     {
-        return $this->_delete($key);
+        if ($this->transaction->isStarted()) {
+            $this->transaction->logDeleted($key);
+            $result = true;
+        } else {
+            $result = $this->_delete($key);
+        }
+
+        return $result;
     }
 
 

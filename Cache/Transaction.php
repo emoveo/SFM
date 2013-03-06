@@ -16,6 +16,8 @@ class SFM_Cache_Transaction
     /** @var array Resetable objects */
     protected $resetableLog;
 
+    protected $deletedLog;
+
      /** @var \SFM_Cache */
     protected $cache;
 
@@ -34,14 +36,21 @@ class SFM_Cache_Transaction
         return $this->isStarted;
     }
 
+    /**
+     * Begin transaction
+     */
     public function begin()
     {
         $this->isStarted = true;
         $this->log = array();
         $this->rawLog = array();
         $this->resetableLog = array();
+        $this->deletedLog = array();
     }
-    
+
+    /**
+     * Commit transaction
+     */
     public function commit()
     {
         $this->isStarted = false;
@@ -53,8 +62,15 @@ class SFM_Cache_Transaction
         foreach ($this->rawLog as $key => $logItem) {
             $this->cache->setRaw($key, $logItem['value'], $logItem['expiration']);
         }
+
+        foreach ($this->deletedLog as $key) {
+            $this->cache->delete($key);
+        }
     }
-    
+
+    /**
+     * Rollback transaction
+     */
     public function rollback()
     {
         $this->isStarted = false;
@@ -66,11 +82,49 @@ class SFM_Cache_Transaction
             $object->restoreObjectState($value['state']);
         }
     }
-    
-    public function logBusiness(SFM_Business $value)
+
+    /**
+     * @param SFM_Business $value
+     * @param integer|null $expiration
+     */
+    public function logBusiness(SFM_Business $value, $expiration = null)
     {
-        $this->log[$value->getExpires()][] =  $value;
+        if (is_null($expiration)) {
+            $expiration = $value->getExpires();
+        }
+
+        $this->log[$expiration][] =  $value;
+        $this->cancelDelete($value->getCacheKey());
         $this->logResetable($value);
+    }
+
+    public function logDeleted($key)
+    {
+        $this->deletedLog[] = $key;
+        $this->cancelSet($key);
+    }
+
+    protected function cancelSet($key)
+    {
+        if ($key = array_search($key, $this->rawLog)) {
+            unset($this->rawLog[$key]);
+        }
+
+        foreach ($this->log as $expiration => $items) {
+
+            if (isset($items[$key])) {
+                unset($items[$key]);
+            }
+
+            $this->log[$expiration] = $items;
+        }
+    }
+
+    protected function cancelDelete($key)
+    {
+        if ($key = array_search($key, $this->deletedLog)) {
+            unset($this->deletedLog[$key]);
+        }
     }
 
     public function logRaw($key, $value, $expiration = 0)
@@ -79,6 +133,8 @@ class SFM_Cache_Transaction
             'value'      => $value,
             'expiration' => $expiration
         );
+
+        $this->cancelDelete($key);
 
         return true;
     }
@@ -97,12 +153,24 @@ class SFM_Cache_Transaction
     public function logMulti(array $items, $expiration = 0)
     {
         foreach ($items as $obj) {
-            $this->log[$expiration][] = $obj;
+            $this->logBusiness($obj, $expiration);
         }
     }
     
     public function getLog()
     {
         return $this->log;
+    }
+
+    /**
+     * Is key deleted during transaction
+     * @param $key
+     * @return bool
+     */
+    public function isKeyDeleted($key)
+    {
+        $isDeleted = in_array($key, $this->deletedLog);
+
+        return $isDeleted;
     }
 }
