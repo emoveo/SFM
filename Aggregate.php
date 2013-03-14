@@ -55,45 +55,45 @@ abstract class SFM_Aggregate extends SFM_Business implements Iterator, Countable
     protected $mapper;
 
     protected $objectState = array();
-
+    
     /**
      * Constructor
-     * 
-     * @param array|Aggregate $proto    Array of object ids or prototypes (Prototype is array for syntetic creation of Business object)
-     * @param Mapper $Mapper            Mapper Object (Factory for creation of objects with help of prototype)
-     * @throws SFM_Excetion_Aggregate
+     *
+     * @param array         $aggregateProto  Entity ids or prototypes array
+     * @param SFM_Mapper    $mapper          Mapper Object
+     * @param null|string   $cacheKey        Cache key for aggregate
+     * @param bool          $loadEntities    Should load aggregate entities
+     *
+     * @throws SFM_Exception_Aggregate
      */
-    public function __construct(array $proto, SFM_Mapper $mapper, $cacheKey=null, $loadEntities=false)
+    public function __construct(array $aggregateProto, SFM_Mapper $mapper, $cacheKey = null, $loadEntities = false)
     {
         $this->mapper = $mapper;
         $this->cacheKey = $cacheKey;
-
         $this->entities = array();
 
         SFM_Injector::inject($this);
+
+        $idField = $this->mapper->getIdField();
         
-        foreach ($proto as $v) {
-            if(!array_key_exists($this->mapper->getIdField(), $v)){
-                throw new SFM_Exception_Aggregate('Proto does not contain id');
+        foreach ($aggregateProto as $entityProto) {
+
+            if (false === is_array($entityProto)) {
+                $entityProto = array($idField => $entityProto);
+            } else if (false === array_key_exists($idField, $entityProto)) {
+                throw new SFM_Exception_Aggregate('Entity proto does not contain id');
             }
-            
-            if (!is_array($v)) {
-                $id = null;
-                if (is_array($v)) {
-                    $id = $v[$this->mapper->getIdField()];
-                } else {
-                    $id = $v;
-                }
-                $this->listEntityId[] = $id;
-            } else {
-                $this->listEntityId[] = $v[$this->mapper->getIdField()];
-                $entity = $mapper->createEntity($v);
+
+            $this->listEntityId[] = $entityProto[$idField];
+
+            if (count($entityProto) > 1) {
+                $entity = $mapper->createEntity($entityProto);
                 $this->entities[$entity->getId()] = $entity;
-                $this->loadedListEntityId[] = $entity->getId();
+                $this->loadedListEntityId[$entity->getId()] = $entity->getId();
             }
         }
         
-        if($loadEntities && !$this->isAllEntitiesLoaded()){
+        if ($loadEntities && false === $this->isAllEntitiesLoaded()) {
             $this->loadEntities();
         }
     }
