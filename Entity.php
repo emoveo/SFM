@@ -299,4 +299,9 @@ abstract class SFM_Entity extends SFM_Business implements SFM_Transaction_Restor
         
         return $identifier;
     }
+    
+    public function __toString()
+    {
+        return $this->getObjectIdentifier();
+    }
 }

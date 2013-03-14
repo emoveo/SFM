@@ -552,7 +552,16 @@ abstract class SFM_Mapper
         if( sizeof($entityId) == 0 || null == $entityId) {
             return array();
         }
-        $cachedVals = SFM_Cache_Memory::getInstance()->getMulti( $this->getEntitiesCacheKeyByListId($entityId) );
+        
+        //from identity map
+        $cachedIdentityMapVals = $this->getEntityMultiFromIdentityMap($this->entityClassName,$entityId);
+        $entityId = array_diff($entityId,array_keys($cachedIdentityMapVals));
+        
+        $memcachedVals = SFM_Cache_Memory::getInstance()->getMulti( $this->getEntitiesCacheKeyByListId($entityId) );
+        $cachedVals = $cachedIdentityMapVals;
+        if($memcachedVals){
+            $cachedVals = array_merge($cachedVals,$memcachedVals);
+        }
 
         $foundedId = array();
         if( null != $cachedVals ) {
@@ -563,13 +572,11 @@ abstract class SFM_Mapper
             $cachedVals = array();
         }
         $notFoundedId = array_diff($entityId, $foundedId);
-//        echo 'getMultiEntitiesByIds<br>';var_dump($cachedVals);
         $dbVals = $this->loadEntitiesFromDbByIds($notFoundedId);
         if( sizeof($dbVals) != 0 ) {
             $this->saveListOfEntitiesInCache($dbVals);
         }
         $result = array_merge($cachedVals, $dbVals);
-//        var_dump($result);
         return $result;
 
     }
@@ -598,6 +605,7 @@ abstract class SFM_Mapper
                 $sql.= ', '.implode(', ',$calculated);
             $sql.= ' FROM '.$this->tableName.' WHERE '. $this->getIdField() .' IN ('. implode(",",$entityId) .')';
             $data = SFM_DB::getInstance()->fetchAll($sql);
+            
             foreach ($data as $row) {
                 $result[] = $this->createEntity($row);
             }
@@ -807,6 +815,18 @@ abstract class SFM_Mapper
     protected function getEntityFromIdentityMap($className, $id)
     {
         return SFM_IdentityMap::getInstance()->getEntity($className, $id);
+    }
+    
+    /**
+     * 
+     *
+     * @param string $className
+     * @param array $ids
+     * @return array of SFM_Entity
+     */
+    protected function getEntityMultiFromIdentityMap($className, $ids)
+    {
+        return SFM_IdentityMap::getInstance()->getEntityMulti($className, $ids);
     }
 
     /**

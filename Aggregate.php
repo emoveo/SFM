@@ -73,7 +73,11 @@ abstract class SFM_Aggregate extends SFM_Business implements Iterator, Countable
         SFM_Injector::inject($this);
         
         foreach ($proto as $v) {
-            if (!is_array($v) || array_key_exists($this->mapper->getIdField(), $v)) {
+            if(!array_key_exists($this->mapper->getIdField(), $v)){
+                throw new SFM_Exception_Aggregate('Proto does not contain id');
+            }
+            
+            if (!is_array($v)) {
                 $id = null;
                 if (is_array($v)) {
                     $id = $v[$this->mapper->getIdField()];

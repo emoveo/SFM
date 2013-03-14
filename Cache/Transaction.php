@@ -92,8 +92,8 @@ class SFM_Cache_Transaction
         if (is_null($expiration)) {
             $expiration = $value->getExpires();
         }
-
-        $this->log[$expiration][] =  $value;
+        
+        $this->log[$expiration][$value->getCacheKey()] =  $value;
         $this->cancelDelete($value->getCacheKey());
         $this->logResetable($value);
     }

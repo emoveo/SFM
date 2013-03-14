@@ -90,6 +90,23 @@ class SFM_IdentityMap implements SFM_IdentityMap_Interface, SFM_Transaction_Engi
 
         return $entity;
     }
+    
+    /**
+     * 
+     * @param string $className
+     * @param array of integer $ids
+     * @return array of SFM_Entity
+     */
+    public function getEntityMulti($className, $ids)
+    {
+        $returnEntities = array();
+        if(!isset($this->identityMap[$className])){
+            return $returnEntities;
+        }
+        $objectsByIds = array_flip($ids);
+        $returnEntities = array_intersect_key($this->identityMap[$className],$objectsByIds);
+        return $returnEntities;
+    }
 
     /**
      * @param SFM_Entity $entity
