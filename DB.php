@@ -185,7 +185,7 @@ class SFM_DB implements SFM_Interface_Singleton, SFM_Transaction_Engine
      * @throws SFM_Exception_DB
      * @return PDOStatement
      */
-    private function query($sql, $vars)
+    public function query($sql, $vars)
     {
         try {
             $result = $this->_db->query($sql, $vars);
