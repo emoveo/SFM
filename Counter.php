@@ -33,4 +33,12 @@ abstract class SFM_Counter extends SFM_Value_Abstract
         }
         return $this->value;
     }
+
+    /**
+     * @return integer
+     */
+    public function get()
+    {
+        return (int) parent::get();
+    }
 }
