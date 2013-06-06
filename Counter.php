@@ -2,39 +2,50 @@
 
 /**
  * Simplify common operations on counters
- * 
- * @author andry
  */
-abstract class SFM_Counter extends SFM_Value_Abstract
+abstract class SFM_Counter extends SFM_Value
 {
-    
-    public  function increment()
+    /**
+     * Increment counter by 1
+     *
+     * @return integer
+     */
+    public function increment()
     {
-        $val = SFM_Cache_Memory::getInstance()->incrementRaw($this->getCacheKey());
-        if( false === $val ) {
-            $val= $this->load();
-            ++$val;
-            $this->set($val);
+        $value = SFM_Cache_Memory::getInstance()->incrementRaw($this->getCacheKey());
+        if (false === $value) {
+            $value = $this->load();
+            ++$value;
+            $this->set($value);
         } else {
-            $this->value = $val;
+            $this->value = $value;
         }
-        return $this->value;
-    }
-    
-    public  function decrement()
-    {
-        $val = SFM_Cache_Memory::getInstance()->decrementRaw($this->getCacheKey());
-        if( false === $val ) {
-            $val= $this->load();
-            --$val;
-            $this->set($val);
-        } else {
-            $this->value = $val;
-        }
+
         return $this->value;
     }
 
     /**
+     * Decrement counter by 1
+     *
+     * @return integer
+     */
+    public function decrement()
+    {
+        $value = SFM_Cache_Memory::getInstance()->decrementRaw($this->getCacheKey());
+        if (false === $value) {
+            $value = $this->load();
+            --$value;
+            $this->set($value);
+        } else {
+            $this->value = $value;
+        }
+
+        return $this->value;
+    }
+
+    /**
+     * Get value
+     *
      * @return integer
      */
     public function get()

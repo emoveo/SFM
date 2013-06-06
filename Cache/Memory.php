@@ -38,7 +38,7 @@ class SFM_Cache_Memory extends SFM_Cache implements SFM_Transaction_Engine, SFM_
         return self::$instance;
     }
 
-    public function setValue($key, SFM_Value_Abstract $value, $expiration = 0)
+    public function setValue($key, SFM_Value $value, $expiration = 0)
     {
         $this->setRaw($key, $value->get(), $expiration);
         $this->transaction->logResetable($value);
