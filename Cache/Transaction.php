@@ -41,6 +41,10 @@ class SFM_Cache_Transaction
      */
     public function begin()
     {
+        if ($this->isStarted) {
+            throw new SFM_Exception_Transaction_AlreadyStarted("Перед вызовом `begin` необходимо завершить прошлую транзакцию");
+        }
+
         $this->isStarted = true;
         $this->log = array();
         $this->rawLog = array();
@@ -50,9 +54,14 @@ class SFM_Cache_Transaction
 
     /**
      * Commit transaction
+     * @throws SFM_Exception_Transaction_NotStarted
      */
     public function commit()
     {
+        if (false === $this->isStarted) {
+            throw new SFM_Exception_Transaction_NotStarted("Перед вызовом `commit` необходимо начать транзакцию");
+        }
+
         $this->isStarted = false;
 
         foreach ($this->log as $expiration => $items) {
@@ -70,9 +79,14 @@ class SFM_Cache_Transaction
 
     /**
      * Rollback transaction
+     * @throws SFM_Exception_Transaction_NotStarted
      */
     public function rollback()
     {
+        if (false === $this->isStarted) {
+            throw new SFM_Exception_Transaction_NotStarted("Перед вызовом `rollback` необходимо начать транзакцию");
+        }
+
         $this->isStarted = false;
 
         foreach ($this->resetableLog as $value) {
@@ -86,6 +100,7 @@ class SFM_Cache_Transaction
     /**
      * @param SFM_Business $value
      * @param integer|null $expiration
+     * @throws SFM_Exception_Transaction_NotStarted
      */
     public function logBusiness(SFM_Business $value, $expiration = null)
     {
