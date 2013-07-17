@@ -54,7 +54,7 @@ class SFM_Util_Image
         $scaleRatio = floatval($newWidth) / $widthOrig;
         $newHeight = intval($heightOrig * $scaleRatio);
 
-        // Load   
+        // Load
         $outImage = imagecreatetruecolor($newWidth, $newHeight);
         $sourceImage = $createfun($filename);
         // Resize
@@ -80,21 +80,30 @@ class SFM_Util_Image
 
         $image->writeImages($filename, true);
     }
-    
-    static public function imQualityScaleToWidth($filename, $newWidth, $blur = 1)
+
+    static public function imQualityScaleToWidth($filename, $newWidth, $blur = 1, $destinationFilename = null)
     {
+        return static::imQualityScaleToWidthAndHeight($filename, $newWidth, 0, $blur, $destinationFilename);
+    }
+
+    static public function imQualityScaleToWidthAndHeight($filename, $newWidth, $newHeight, $blur = 1, $destinationFilename = null)
+    {
+        if($destinationFilename === null){
+            $destinationFilename = $filename;
+        }
+
         list($width, $height) = getimagesize($filename);
         if ($width <= $newWidth)
             return;
 
         $image = new Imagick($filename);
-        
+
         // If 0 is provided as a width or height parameter,
         // aspect ratio is maintained
-        $image->resizeImage($newWidth, 0, imagick::FILTER_HERMITE, $blur, false);
-
-        $image->writeImages($filename, true);
+        $image->resizeImage($newWidth, $newHeight, imagick::FILTER_HERMITE, $blur, false);
+        $image->writeImages($destinationFilename, true);
     }
+
 
     static public function imScaleToSideWithBorders($filename, $newSideSize)
     {

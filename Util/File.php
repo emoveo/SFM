@@ -29,7 +29,7 @@ class SFM_Util_File
             if(in_array($ext, explode(",", "FLV,MPG,MP4,MOV,AVI,WMV")))
                 if(strpos($file["type"], "video/")!==false || $mime_type===false) return true;
         }
-        
+
         return false;
     }
 
@@ -38,16 +38,27 @@ class SFM_Util_File
         $arr = explode("/", mime_content_type($filename));
         return $arr[0];
     }
-    
+
     static public function getTypeExt($filename)
     {
         $arr = explode("/", mime_content_type($filename));
         return $arr[1];
-    }    
+    }
 
     static public function getExt($filename)
     {
         $path_parts = pathinfo($filename);
         return isset($path_parts['extension']) ? $path_parts['extension'] : false;
+    }
+
+    static public function getFileWithExtension($filename, $newExtension)
+    {
+        $ext = static::getExt($filename);
+        if($ext){
+            $newFileName = str_replace('.'.$ext,'.'.$newExtension,$filename);
+        } else {
+            $newFileName = $filename.'.'.$newExtension;
+        }
+        return $newFileName;
     }
 }
