@@ -14,6 +14,8 @@ class SFM_Cache implements SFM_Interface_Singleton
     const KEY_TAGS  = 'tags';
     const KEY_EXPIRES  = 'expires';
 
+    const FORCE_TIMEOUT = 1;
+
     /**
      *
      * @var SFM_Cache
@@ -44,7 +46,7 @@ class SFM_Cache implements SFM_Interface_Singleton
             $this->driver = new SFM_Cache_Dummy();
         }
 
-        if (!$this->driver->addServer($host, $port))
+        if (!$this->driver->addServer($host, $port, true))
             throw new SFM_Exception_Memcached('Can\'t connect to server '.$host.':'.$port);
         else
         {
@@ -163,7 +165,9 @@ class SFM_Cache implements SFM_Interface_Singleton
         if ($this->transaction->isStarted()) {
             $result = $this->transaction->logRaw($key, $value, $expiration);
         } else {
+            $time = microtime(true);
             $result = $this->driver->set($key, $value, $expiration);
+            $this->checkCacheIsAlive($time);
         }
 
         return $result;
@@ -283,9 +287,17 @@ class SFM_Cache implements SFM_Interface_Singleton
         $value = serialize($value);
         $key = $this->generateKey($key);
         $timer = SFM_Monitor::get()->createTimer(array('db' => 'memcached', 'operation' => 'set'));
+        $time = microtime(true);
         $this->driver->set($key, $value, $expiration);
+        $this->checkCacheIsAlive($time);
         $timer->stop();
+    }
 
+    protected function checkCacheIsAlive($time)
+    {
+        if (microtime(true) - $time > self::FORCE_TIMEOUT) {
+            $this->driver = new SFM_Cache_Dummy();
+        }
     }
 
     /**
@@ -303,7 +315,9 @@ class SFM_Cache implements SFM_Interface_Singleton
             $resultItems[$key] = $value;
         }
         $timer = SFM_Monitor::get()->createTimer(array('db' => 'memcached', 'operation' => 'setMulti'));
+        $time = microtime(true);
         $this->driver->setMulti($resultItems, $expiration);
+        $this->checkCacheIsAlive($time);
         $timer->stop();
     }
 
@@ -316,7 +330,9 @@ class SFM_Cache implements SFM_Interface_Singleton
     protected function _get($key)
     {
         $timer = SFM_Monitor::get()->createTimer(array('db' => 'memcached', 'operation' => 'get'));
+        $time = microtime(true);
         $value = $this->driver->get($this->generateKey($key));
+        $this->checkCacheIsAlive($time);
         $timer->stop();
         return ($value === false) ? null : $value;
     }
@@ -334,7 +350,9 @@ class SFM_Cache implements SFM_Interface_Singleton
             $key = $this->generateKey($key);
         }
         $timer = SFM_Monitor::get()->createTimer(array('db' => 'memcached', 'operation' => 'getMulti'));
+        $time = microtime(true);
         $values = $this->driver->getMulti($keys);
+        $this->checkCacheIsAlive($time);
         $timer->stop();
         return ($values === false) ? null : $values;
     }
@@ -347,7 +365,9 @@ class SFM_Cache implements SFM_Interface_Singleton
     protected function _delete($key)
     {
         $timer = SFM_Monitor::get()->createTimer(array('db' => 'memcached', 'operation' => 'delete'));
+        $time = microtime(true);
         $result = $this->driver->delete($this->generateKey($key));
+        $this->checkCacheIsAlive($time);
         $timer->stop();
         return $result;
     }
@@ -360,7 +380,9 @@ class SFM_Cache implements SFM_Interface_Singleton
     public function flush()
     {
         $timer = SFM_Monitor::get()->createTimer(array('db' => 'memcached', 'operation' => 'flush'));
+        $time = microtime(true);
         $this->driver->flush();
+        $this->checkCacheIsAlive($time);
         $timer->stop();
     }
 
