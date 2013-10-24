@@ -93,8 +93,10 @@ class SFM_Util_Image
         }
 
         list($width, $height) = getimagesize($filename);
-        if ($width <= $newWidth)
-            return;
+        if ($width <= $newWidth){
+            $newWidth = $width;
+            $newHeight = $height;
+        }
 
         $image = new Imagick($filename);
 
