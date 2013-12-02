@@ -1,13 +1,11 @@
 <?php
 require_once 'SFM/Cache.php';
 /**
- * Memcache Fake 
+ * Memcache Fake
  *
  */
 class SFM_Cache_Dummy
 {
-    protected $storage;
-    
     public function __construct()
     {
         ;
@@ -26,19 +24,17 @@ class SFM_Cache_Dummy
     {
         return FALSE;
     }
-    
+
     public function set($val)
     {
-        ; 
+        ;
     }
-    
+
     public function setMulti(array $items, $expiration=0)
     {
-        foreach ( $items as $tmp) {
-            $this->storage[$tmp->getCacheKey()] = $tmp;
-        }
+        ;
     }
-    
+
     public function delete($key)
     {
         ;
@@ -51,19 +47,9 @@ class SFM_Cache_Dummy
     {
         ;
     }
-    
+
     public function getResultCode()
     {
         return Memcached::RES_SUCCESS;
-    }
-    
-    public function getVal( $key )
-    {
-        return $this->storage[$key];
-    }
-    
-    public function getStorage()
-    {
-        return $this->storage;
     }
 }
