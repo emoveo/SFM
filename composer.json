@@ -1,0 +1,13 @@
+{
+    "name": "emoveo/sfm",
+    "type": "library",
+    "autoload": {
+	"psr-0": {
+		"SFM": "src/" 	
+	}
+    },
+    "require": {
+        "php": ">5.3",
+        "zendframework/zend-db": "2.2.5"
+    }
+}
