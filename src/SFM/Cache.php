@@ -3,7 +3,7 @@
 /**
  *  Class for work with daemons that use memcache protocol. Implements tags system for cache control
  */
-class SFM_Cache
+abstract class SFM_Cache implements SFM_MonitorableInterface
 {
     const KEY_DILIMITER = '@';
 
@@ -29,6 +29,11 @@ class SFM_Cache
      * @var SFM_Cache_Transaction
      */
     protected $transaction;
+
+    /**
+     * @var SFM_MonitorInterface
+     */
+    protected $monitor;
 
     /**
      * @param SFM_Config_Cache $config
@@ -61,6 +66,14 @@ class SFM_Cache
     public function __construct()
     {
         $this->transaction = new SFM_Cache_Transaction($this);
+    }
+
+    /**
+     * @param SFM_MonitorInterface $monitor
+     */
+    public function setMonitor(SFM_MonitorInterface $monitor)
+    {
+        $this->monitor = $monitor;
     }
 
     /**
@@ -278,11 +291,16 @@ class SFM_Cache
     {
         $value = serialize($value);
         $key = $this->generateKey($key);
-        $timer = SFM_Monitor::get()->createTimer(array('db' => 'memcached', 'operation' => 'set'));
+        if ($this->monitor !== null) {
+            $timer = $this->monitor->createTimer(array('db' => get_class($this), 'operation' => 'set'));
+        }
+
         $time = microtime(true);
         $this->driver->set($key, $value, $expiration);
         $this->checkCacheIsAlive($time);
-        $timer->stop();
+        if (isset($timer)) {
+            $timer->stop();
+        }
     }
 
     protected function checkCacheIsAlive($time)
@@ -306,11 +324,16 @@ class SFM_Cache
             $key = $this->generateKey($key);
             $resultItems[$key] = $value;
         }
-        $timer = SFM_Monitor::get()->createTimer(array('db' => 'memcached', 'operation' => 'setMulti'));
+        if ($this->monitor !== null) {
+            $timer = $this->monitor->createTimer(array('db' => get_class($this), 'operation' => 'setMulti'));
+        }
         $time = microtime(true);
         $this->driver->setMulti($resultItems, $expiration);
         $this->checkCacheIsAlive($time);
-        $timer->stop();
+
+        if (isset($timer)) {
+            $timer->stop();
+        }
     }
 
     /**
@@ -321,11 +344,17 @@ class SFM_Cache
      */
     protected function _get($key)
     {
-        $timer = SFM_Monitor::get()->createTimer(array('db' => 'memcached', 'operation' => 'get'));
+        if ($this->monitor !== null) {
+            $timer = $this->monitor->createTimer(array('db' => get_class($this), 'operation' => 'get'));
+        }
+
         $time = microtime(true);
         $value = $this->driver->get($this->generateKey($key));
         $this->checkCacheIsAlive($time);
-        $timer->stop();
+
+        if (isset($timer)) {
+            $timer->stop();
+        }
         return ($value === false) ? null : $value;
     }
 
@@ -341,11 +370,18 @@ class SFM_Cache
         {
             $key = $this->generateKey($key);
         }
-        $timer = SFM_Monitor::get()->createTimer(array('db' => 'memcached', 'operation' => 'getMulti'));
+        if ($this->monitor !== null) {
+            $timer = $this->monitor->createTimer(array('db' => get_class($this), 'operation' => 'getMulti'));
+        }
+
         $time = microtime(true);
         $values = $this->driver->getMulti($keys);
         $this->checkCacheIsAlive($time);
-        $timer->stop();
+
+        if (isset($timer)) {
+            $timer->stop();
+        }
+
         return ($values === false) ? null : $values;
     }
     /**
@@ -356,11 +392,17 @@ class SFM_Cache
      */
     protected function _delete($key)
     {
-        $timer = SFM_Monitor::get()->createTimer(array('db' => 'memcached', 'operation' => 'delete'));
+        if ($this->monitor !== null) {
+            $timer = $this->monitor->createTimer(array('db' => get_class($this), 'operation' => 'delete'));
+        }
+
         $time = microtime(true);
         $result = $this->driver->delete($this->generateKey($key));
         $this->checkCacheIsAlive($time);
-        $timer->stop();
+
+        if (isset($timer)) {
+            $timer->stop();
+        }
         return $result;
     }
 
@@ -371,11 +413,17 @@ class SFM_Cache
      */
     public function flush()
     {
-        $timer = SFM_Monitor::get()->createTimer(array('db' => 'memcached', 'operation' => 'flush'));
+        if ($this->monitor !== null) {
+            $timer = $this->monitor->createTimer(array('db' => get_class($this), 'operation' => 'flush'));
+        }
+
         $time = microtime(true);
         $this->driver->flush();
         $this->checkCacheIsAlive($time);
-        $timer->stop();
+
+        if (isset($timer)) {
+            $timer->stop();
+        }
     }
 
     public function getDriver()
@@ -415,22 +463,48 @@ class SFM_Cache
 
     public function beginTransaction()
     {
-        $timer = SFM_Monitor::get()->createTimer(array('db' => 'memcached', 'operation' => 'beginTransaction'));
+        if ($this->monitor !== null) {
+            $timer = $this->monitor->createTimer(array('db' => get_class($this), 'operation' => 'beginTransaction'));
+        }
+
         $this->transaction->begin();
-        $timer->stop();
+
+        if (isset($timer)) {
+            $timer->stop();
+        }
+    }
+
+    /**
+     * @return bool
+     */
+    public function isTransaction()
+    {
+        return $this->transaction->isStarted();
     }
 
     public function commitTransaction()
     {
-        $timer = SFM_Monitor::get()->createTimer(array('db' => 'memcached', 'operation' => 'commitTransaction'));
+        if ($this->monitor !== null) {
+            $timer = $this->monitor->createTimer(array('db' => get_class($this), 'operation' => 'commitTransaction'));
+        }
+
         $this->transaction->commit();
-        $timer->stop();
+
+        if (isset($timer)) {
+            $timer->stop();
+        }
     }
 
     public function rollbackTransaction()
     {
-        $timer = SFM_Monitor::get()->createTimer(array('db' => 'memcached', 'operation' => 'rollbackTransaction'));
+        if ($this->monitor !== null) {
+            $timer = $this->monitor->createTimer(array('db' => get_class($this), 'operation' => 'rollbackTransaction'));
+        }
+
         $this->transaction->rollback();
-        $timer->stop();
+
+        if (isset($timer)) {
+            $timer->stop();
+        }
     }
 }

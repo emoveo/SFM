@@ -9,4 +9,9 @@ interface SFM_Transaction_Engine
     public function commitTransaction();
 
     public function rollbackTransaction();
+
+    /**
+     * @return bool
+     */
+    public function isTransaction();
 }

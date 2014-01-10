@@ -2,7 +2,7 @@
 /**
  * Identity Map for already registered objects
  */
-class SFM_IdentityMap implements SFM_IdentityMap_Interface, SFM_Transaction_Engine
+class SFM_IdentityMap implements SFM_IdentityMapInterface, SFM_Transaction_Engine
 {
     protected $isEnabled     = true;
     protected $isTransaction = false;
@@ -20,6 +20,14 @@ class SFM_IdentityMap implements SFM_IdentityMap_Interface, SFM_Transaction_Engi
         $identityKey = get_class($entity);
 
         return $identityKey;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isTransaction()
+    {
+        return $this->isTransaction;
     }
 
     /**

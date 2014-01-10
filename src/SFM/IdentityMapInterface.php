@@ -1,9 +1,9 @@
 <?php
-interface SFM_IdentityMap_Interface
+interface SFM_IdentityMapInterface
 {
     /**
      * @param SFM_Entity $entity
-     * @return SFM_IdentityMap_Interface
+     * @return SFM_IdentityMapInterface
      */
     public function addEntity(SFM_Entity $entity);
 
@@ -16,12 +16,12 @@ interface SFM_IdentityMap_Interface
 
     /**
      * @param SFM_Entity $entity
-     * @return SFM_IdentityMap_Interface
+     * @return SFM_IdentityMapInterface
      */
     public function deleteEntity(SFM_Entity $entity);
 
     /**
-     * @return SFM_IdentityMap_Interface
+     * @return SFM_IdentityMapInterface
      */
     public function enable();
 

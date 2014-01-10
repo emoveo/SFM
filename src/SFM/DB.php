@@ -1,6 +1,6 @@
 <?php
 
-class SFM_DB implements SFM_Transaction_Engine
+class SFM_DB implements SFM_Transaction_Engine, SFM_MonitorableInterface
 {
     /**
      * @var \Zend\Db\Adapter\Adapter
@@ -19,12 +19,16 @@ class SFM_DB implements SFM_Transaction_Engine
     protected $config = null;
 
     /**
-     * @return SFM_DB
-     * @deprecated
+     * @var SFM_MonitorInterface
      */
-    public static function getInstance()
+    protected $monitor;
+
+    /**
+     * @param SFM_MonitorInterface $monitor
+     */
+    public function setMonitor(SFM_MonitorInterface $monitor)
     {
-        return SFM_Manager::getInstance()->getDb();
+        $this->monitor = $monitor;
     }
 
     /**
@@ -103,7 +107,9 @@ class SFM_DB implements SFM_Transaction_Engine
      */
     public function fetchAll($sql, array $vars=array())
     {
-        $timer = SFM_Monitor::get()->createTimer(array('db' => 'sql', 'operation' => 'fetchAll'));
+        if ($this->monitor !== null) {
+            $timer = $this->monitor->createTimer(array('db' => get_class($this), 'operation' => 'fetchAll'));
+        }
 
         /** @var \Zend\Db\ResultSet\ResultSet $stmt */
         $stmt = $this->query($sql, $vars);
@@ -114,7 +120,10 @@ class SFM_DB implements SFM_Transaction_Engine
             $data[] = (array) $row;
         }
 
-        $timer->stop();
+        if (isset($timer)) {
+            $timer->stop();
+        }
+
         return $data;
     }
 
@@ -127,9 +136,15 @@ class SFM_DB implements SFM_Transaction_Engine
      */
     public function fetchLine($sql, array $vars=array())
     {
-        $timer = SFM_Monitor::get()->createTimer(array('db' => 'sql', 'operation' => 'fetchLine'));
+        if ($this->monitor !== null) {
+            $timer = $this->monitor->createTimer(array('db' => get_class($this), 'operation' => 'fetchLine'));
+        }
+
         $stmt = $this->query($sql, $vars);
-        $timer->stop();
+
+        if (isset($timer)) {
+            $timer->stop();
+        }
 
         return $stmt->current();
     }
@@ -143,11 +158,17 @@ class SFM_DB implements SFM_Transaction_Engine
      */
     public function fetchValue($sql, array $vars=array())
     {
-        $timer = SFM_Monitor::get()->createTimer(array('db' => 'sql', 'operation' => 'fetchValue'));
+        if ($this->monitor !== null) {
+            $timer = $this->monitor->createTimer(array('db' => get_class($this), 'operation' => 'fetchValue'));
+        }
+
         $stmt = $this->query($sql, $vars);
         $array = (array) $stmt->current();
         $data = array_shift($array);
-        $timer->stop();
+
+        if (isset($timer)) {
+            $timer->stop();
+        }
         return $data;
     }
 
@@ -158,12 +179,19 @@ class SFM_DB implements SFM_Transaction_Engine
      * @param array $vars
      * @return int Number of rows affected bt update
      */
-    public function update($sql, $vars)
+    public function update($sql, $vars = array())
     {
-        $timer = SFM_Monitor::get()->createTimer(array('db' => 'sql', 'operation' => 'update'));
+        if ($this->monitor !== null) {
+            $timer = $this->monitor->createTimer(array('db' => get_class($this), 'operation' => 'update'));
+        }
+
         $stmt = $this->query($sql, $vars);
         $data = $stmt->count();
-        $timer->stop();
+
+        if (isset($timer)) {
+            $timer->stop();
+        }
+
         return $data;
     }
 
@@ -176,7 +204,7 @@ class SFM_DB implements SFM_Transaction_Engine
      * @throws SFM_Exception_DB
      * @return \Zend\Db\ResultSet\ResultSet
      */
-    public function query($sql, $vars)
+    public function query($sql, $vars = array())
     {
         try {
             $result = $this->db->query($sql, $vars);
@@ -202,9 +230,16 @@ class SFM_DB implements SFM_Transaction_Engine
      */
     public function insert($sql, $vars, $idFieldName = 'id', $isIdAutoincrement = true)
     {
-        $timer = SFM_Monitor::get()->createTimer(array('db' => 'sql', 'operation' => 'insert'));
+        if ($this->monitor !== null) {
+            $timer = $this->monitor->createTimer(array('db' => get_class($this), 'operation' => 'insert'));
+        }
+
         $this->query($sql, $vars);
-        $timer->stop();
+
+        if (isset($timer)) {
+            $timer->stop();
+        }
+
         if($isIdAutoincrement){
             return $this->db->getDriver()->getLastGeneratedValue();
         } else {
@@ -214,10 +249,16 @@ class SFM_DB implements SFM_Transaction_Engine
     
     public function delete($sql, $vars)
     {
-        $timer = SFM_Monitor::get()->createTimer(array('db' => 'sql', 'operation' => 'delete'));
+        if ($this->monitor !== null) {
+            $timer = $this->monitor->createTimer(array('db' => get_class($this), 'operation' => 'delete'));
+        }
+
         $stmt = $this->query($sql, $vars);
         $data = $stmt->count();
-        $timer->stop();
+
+        if (isset($timer)) {
+            $timer->stop();
+        }
 
         return $data;
     }
@@ -230,7 +271,10 @@ class SFM_DB implements SFM_Transaction_Engine
     {
         $result = true;
         if ($this->transactionLevel == 0) {
-            $timer = SFM_Monitor::get()->createTimer(array('db' => 'sql', 'operation' => 'beginTransaction'));
+
+            if ($this->monitor !== null) {
+                $timer = $this->monitor->createTimer(array('db' => get_class($this), 'operation' => 'beginTransaction'));
+            }
             $this->transactionLevel++;
 
             try {
@@ -243,12 +287,22 @@ class SFM_DB implements SFM_Transaction_Engine
                 throw new SFM_Exception_DB("Transaction begin error", $context, $e);
             }
 
-            $timer->stop();
+            if (isset($timer)) {
+                $timer->stop();
+            }
         } else {
             $result = false;
         }
 
         return $result;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isTransaction()
+    {
+        return $this->transactionLevel > 0;
     }
     
     /**
@@ -264,7 +318,10 @@ class SFM_DB implements SFM_Transaction_Engine
         $result = true;
         $this->transactionLevel--;
         if ($this->transactionLevel == 0) {
-            $timer = SFM_Monitor::get()->createTimer(array('db' => 'sql', 'operation' => 'commitTransaction'));
+
+            if ($this->monitor !== null) {
+                $timer = $this->monitor->createTimer(array('db' => 'sql', 'operation' => 'commitTransaction'));
+            }
 
             try {
                 $this->db->getDriver()->getConnection()->commit();
@@ -276,7 +333,10 @@ class SFM_DB implements SFM_Transaction_Engine
                 throw new SFM_Exception_DB("Transaction commit error", $context, $e);
             }
 
-            $timer->stop();
+            if (isset($timer)) {
+                $timer->stop();
+            }
+
         } else {
             $result = false;
         }
@@ -293,7 +353,10 @@ class SFM_DB implements SFM_Transaction_Engine
         //only if any transaction is started and was not rollbacked
         if($this->transactionLevel != 0) {
             $this->transactionLevel = 0;
-            $timer = SFM_Monitor::get()->createTimer(array('db' => 'sql', 'operation' => 'rollbackTransaction'));
+
+            if ($this->monitor !== null) {
+                $timer = $this->monitor->createTimer(array('db' => 'sql', 'operation' => 'rollbackTransaction'));
+            }
 
             try {
                 $this->db->getDriver()->getConnection()->rollBack();
@@ -305,7 +368,9 @@ class SFM_DB implements SFM_Transaction_Engine
                 throw new SFM_Exception_DB("Transaction rollback error", $context, $e);
             }
 
-            $timer->stop();
+            if (isset($timer)) {
+                $timer->stop();
+            }
             return true;
         } else {
             return false;
