@@ -14,26 +14,26 @@ abstract class SFM_Cache implements SFM_MonitorableInterface
     const FORCE_TIMEOUT = 1;
 
     /**
-     * Memcached object
-     *
      * @var Memcached
      */
-    protected $driver;
+    protected $driverCache;
 
-    /** @var SFM_Config_Cache */
+    /**
+     * @var SFM_Config_Cache
+     */
     protected $config;
-
-    protected $projectPrefix = '';
 
     /**
      * @var SFM_Cache_Transaction
      */
-    protected $transaction;
+    protected $transactionCache;
 
     /**
      * @var SFM_MonitorInterface
      */
     protected $monitor;
+
+    protected $projectPrefix = '';
 
     /**
      * @param SFM_Config_Cache $config
@@ -46,6 +46,10 @@ abstract class SFM_Cache implements SFM_MonitorableInterface
         return $this;
     }
 
+    /**
+     * @throws SFM_Exception_Memcached
+     * @throws SFM_Exception_DB
+     */
     public function connect()
     {
         if (is_null($this->config)) {
@@ -53,11 +57,11 @@ abstract class SFM_Cache implements SFM_MonitorableInterface
         }
 
         if ($this->config->isDisabled()) {
-            $this->driver = new SFM_Cache_Dummy();
+            $this->driverCache = new SFM_Cache_Dummy();
         } else {
-            $this->driver = new Memcached();
+            $this->driverCache = new Memcached();
 
-            if (!$this->driver->addServer($this->config->getHost(), $this->config->getPort(), true)) {
+            if (!$this->driverCache->addServer($this->config->getHost(), $this->config->getPort(), true)) {
                 throw new SFM_Exception_Memcached('Can\'t connect to server '.$this->config->getHost().':'.$this->config->getPort());
             }
         }
@@ -65,7 +69,7 @@ abstract class SFM_Cache implements SFM_MonitorableInterface
 
     public function __construct()
     {
-        $this->transaction = new SFM_Cache_Transaction($this);
+        $this->transactionCache = new SFM_Cache_Transaction($this);
     }
 
     /**
@@ -84,19 +88,18 @@ abstract class SFM_Cache implements SFM_MonitorableInterface
      */
     public function get($key)
     {
-        if ($this->transaction->isStarted() && $this->transaction->isKeyDeleted($key)) {
-            $result = null;
-        } else {
-            $arr = unserialize($this->_get($key));
-            if (!is_array($arr)) {
-                return null;
-            }
+        $raw = $this->_get($key);
+        $arr = unserialize($raw);
+        if (is_array($arr)) {
             $result = $this->getValidObject($arr);
-            if($result === null) {
+            if ($result === null) {
                 //If the object is invalid, remove it from cache
                 $this->_delete($key);
             }
+        } else {
+            $result = null;
         }
+
 
         return $result;
     }
@@ -108,14 +111,6 @@ abstract class SFM_Cache implements SFM_MonitorableInterface
      */
     public function getMulti( array $keys )
     {
-        if ($this->transaction->isStarted()) {
-            foreach ($keys as $i => $key) {
-                if ($this->transaction->isKeyDeleted($key)) {
-                    unset($keys[$i]);
-                }
-            }
-        }
-
         $values = $this->_getMulti($keys);
         $result = array();
         if( false != $values ) {
@@ -127,11 +122,9 @@ abstract class SFM_Cache implements SFM_MonitorableInterface
             }
         }
 
-        if(sizeof($result)!=0) {
-
+        if (sizeof($result) != 0) {
             return $result;
         } else {
-
             return null;
         }
     }
@@ -143,8 +136,8 @@ abstract class SFM_Cache implements SFM_MonitorableInterface
      */
     public function set(SFM_Business $value)
     {
-        if ($this->transaction->isStarted()) {
-            $this->transaction->logBusiness($value);
+        if ($this->transactionCache->isStarted()) {
+            $this->transactionCache->logBusiness($value);
         } else {
 
             $data = array(
@@ -167,11 +160,11 @@ abstract class SFM_Cache implements SFM_MonitorableInterface
     {
         $key = $this->generateKey($key);
 
-        if ($this->transaction->isStarted()) {
-            $result = $this->transaction->logRaw($key, $value, $expiration);
+        if ($this->transactionCache->isStarted()) {
+            $result = $this->transactionCache->logRaw($key, $value, $expiration);
         } else {
             $time = microtime(true);
-            $result = $this->driver->set($key, $value, $expiration);
+            $result = $this->driverCache->set($key, $value, $expiration);
             $this->checkCacheIsAlive($time);
         }
 
@@ -187,8 +180,8 @@ abstract class SFM_Cache implements SFM_MonitorableInterface
      */
     public function setMulti(array $items, $expiration=0)
     {
-        if ($this->transaction->isStarted()) {
-            $this->transaction->logMulti($items, $expiration);
+        if ($this->transactionCache->isStarted()) {
+            $this->transactionCache->logMulti($items, $expiration);
         } else {
 
             $arr = array();
@@ -213,8 +206,8 @@ abstract class SFM_Cache implements SFM_MonitorableInterface
      */
     public function delete($key)
     {
-        if ($this->transaction->isStarted()) {
-            $this->transaction->logDeleted($key);
+        if ($this->transactionCache->isStarted()) {
+            $this->transactionCache->logDeleted($key);
             $result = true;
         } else {
             $result = $this->_delete($key);
@@ -296,8 +289,14 @@ abstract class SFM_Cache implements SFM_MonitorableInterface
         }
 
         $time = microtime(true);
-        $this->driver->set($key, $value, $expiration);
-        $this->checkCacheIsAlive($time);
+
+        if ($this->transactionCache->isStarted()) {
+            $this->transactionCache->logRaw($key, $value, $expiration);
+        } else {
+            $this->driverCache->set($key, $value, $expiration);
+            $this->checkCacheIsAlive($time);
+        }
+
         if (isset($timer)) {
             $timer->stop();
         }
@@ -306,7 +305,7 @@ abstract class SFM_Cache implements SFM_MonitorableInterface
     protected function checkCacheIsAlive($time)
     {
         if (microtime(true) - $time > self::FORCE_TIMEOUT) {
-            $this->driver = new SFM_Cache_Dummy();
+            $this->driverCache = new SFM_Cache_Dummy();
         }
     }
 
@@ -328,8 +327,13 @@ abstract class SFM_Cache implements SFM_MonitorableInterface
             $timer = $this->monitor->createTimer(array('db' => get_class($this), 'operation' => 'setMulti'));
         }
         $time = microtime(true);
-        $this->driver->setMulti($resultItems, $expiration);
-        $this->checkCacheIsAlive($time);
+
+        if ($this->transactionCache->isStarted()) {
+            $this->transactionCache->logRawMulti($resultItems, $expiration);
+        } else {
+            $this->driverCache->setMulti($resultItems, $expiration);
+            $this->checkCacheIsAlive($time);
+        }
 
         if (isset($timer)) {
             $timer->stop();
@@ -349,12 +353,21 @@ abstract class SFM_Cache implements SFM_MonitorableInterface
         }
 
         $time = microtime(true);
-        $value = $this->driver->get($this->generateKey($key));
-        $this->checkCacheIsAlive($time);
+
+        $value = null;
+        if ($this->transactionCache->isStarted()) {
+            $value = $this->transactionCache->getRaw($key);
+        }
+
+        if (empty($value)) {
+            $value = $this->driverCache->get($this->generateKey($key));
+            $this->checkCacheIsAlive($time);
+        }
 
         if (isset($timer)) {
             $timer->stop();
         }
+
         return ($value === false) ? null : $value;
     }
 
@@ -375,8 +388,19 @@ abstract class SFM_Cache implements SFM_MonitorableInterface
         }
 
         $time = microtime(true);
-        $values = $this->driver->getMulti($keys);
-        $this->checkCacheIsAlive($time);
+
+        $values = array();
+        if ($this->transactionCache->isStarted()) {
+            $values = array();
+            foreach ($keys as $key) {
+                $values[$key] = $this->transactionCache->getRaw($key);
+            }
+        }
+
+        if (empty($values)) {
+            $values = $this->driverCache->getMulti($keys);
+            $this->checkCacheIsAlive($time);
+        }
 
         if (isset($timer)) {
             $timer->stop();
@@ -397,8 +421,12 @@ abstract class SFM_Cache implements SFM_MonitorableInterface
         }
 
         $time = microtime(true);
-        $result = $this->driver->delete($this->generateKey($key));
-        $this->checkCacheIsAlive($time);
+        if ($this->transactionCache->isStarted()) {
+            $result = $this->transactionCache->logDeleted($key);
+        } else {
+            $result = $this->driverCache->delete($this->generateKey($key));
+            $this->checkCacheIsAlive($time);
+        }
 
         if (isset($timer)) {
             $timer->stop();
@@ -418,7 +446,7 @@ abstract class SFM_Cache implements SFM_MonitorableInterface
         }
 
         $time = microtime(true);
-        $this->driver->flush();
+        $this->driverCache->flush();
         $this->checkCacheIsAlive($time);
 
         if (isset($timer)) {
@@ -426,9 +454,9 @@ abstract class SFM_Cache implements SFM_MonitorableInterface
         }
     }
 
-    public function getDriver()
+    public function getDriverCache()
     {
-        return $this->driver;
+        return $this->driverCache;
     }
 
         /**
@@ -467,7 +495,7 @@ abstract class SFM_Cache implements SFM_MonitorableInterface
             $timer = $this->monitor->createTimer(array('db' => get_class($this), 'operation' => 'beginTransaction'));
         }
 
-        $this->transaction->begin();
+        $this->transactionCache->begin();
 
         if (isset($timer)) {
             $timer->stop();
@@ -479,7 +507,7 @@ abstract class SFM_Cache implements SFM_MonitorableInterface
      */
     public function isTransaction()
     {
-        return $this->transaction->isStarted();
+        return $this->transactionCache->isStarted();
     }
 
     public function commitTransaction()
@@ -488,7 +516,7 @@ abstract class SFM_Cache implements SFM_MonitorableInterface
             $timer = $this->monitor->createTimer(array('db' => get_class($this), 'operation' => 'commitTransaction'));
         }
 
-        $this->transaction->commit();
+        $this->transactionCache->commit();
 
         if (isset($timer)) {
             $timer->stop();
@@ -501,7 +529,7 @@ abstract class SFM_Cache implements SFM_MonitorableInterface
             $timer = $this->monitor->createTimer(array('db' => get_class($this), 'operation' => 'rollbackTransaction'));
         }
 
-        $this->transaction->rollback();
+        $this->transactionCache->rollback();
 
         if (isset($timer)) {
             $timer->stop();

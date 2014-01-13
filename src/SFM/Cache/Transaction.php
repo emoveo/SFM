@@ -117,6 +117,8 @@ class SFM_Cache_Transaction
     {
         $this->deletedLog[] = $key;
         $this->cancelSet($key);
+
+        return true;
     }
 
     protected function cancelSet($key)
@@ -154,6 +156,21 @@ class SFM_Cache_Transaction
         return true;
     }
 
+    /**
+     * @param string$key
+     * @return mixed|null
+     */
+    public function getRaw($key)
+    {
+        if (in_array($key, $this->deletedLog)) {
+            $value = null;
+        } else {
+            $value = isset($this->rawLog[$key]) ? $this->rawLog[$key] : null;
+        }
+
+        return $value;
+    }
+
     public function logResetable(SFM_Transaction_Restorable $value)
     {
         if (false === isset($this->resetableLog[$value->getObjectIdentifier()])) {
@@ -171,21 +188,16 @@ class SFM_Cache_Transaction
             $this->logBusiness($obj, $expiration);
         }
     }
+
+    public function logRawMulti(array $items, $expiration = null)
+    {
+        foreach ($items as $key => $value) {
+            $this->logRaw($key, $value, $expiration);
+        }
+    }
     
     public function getLog()
     {
         return $this->log;
-    }
-
-    /**
-     * Is key deleted during transaction
-     * @param $key
-     * @return bool
-     */
-    public function isKeyDeleted($key)
-    {
-        $isDeleted = in_array($key, $this->deletedLog);
-
-        return $isDeleted;
     }
 }

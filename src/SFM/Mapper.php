@@ -329,7 +329,6 @@ abstract class SFM_Mapper
                 }
             }
             if( sizeof($changedUniqueKeys) != 0 ) {
-//                echo "<br>chage unique key<br>";
                 foreach ($changedUniqueKeys as $key) {
                     SFM_Manager::getInstance()->getCacheMemory()->delete($oldEntity->getCacheKeyByUniqueFields($key));
                     $this->createUniqueFieldsCache( $newEntity, $key );
@@ -829,7 +828,7 @@ abstract class SFM_Mapper
     protected function saveCached(SFM_Business $object)
     {
         $cacheKey = $object->getCacheKey();
-        if($cacheKey !== null){
+        if (null !== $cacheKey) {
             $tags = $object->getCacheTags();
 
             $Cache = SFM_Manager::getInstance()->getCacheMemory();

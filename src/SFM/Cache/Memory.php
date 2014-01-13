@@ -8,32 +8,32 @@ class SFM_Cache_Memory extends SFM_Cache implements SFM_Transaction_Engine, SFM_
     public function setValue($key, SFM_Value $value, $expiration = 0)
     {
         $this->setRaw($key, $value->get(), $expiration);
-        $this->transaction->logResetable($value);
+        $this->transactionCache->logResetable($value);
     }
     
     public function getRaw($key)
     {
-        $value = $this->driver->get($this->generateKey($key));
+        $value = $this->driverCache->get($this->generateKey($key));
         return ($value === false) ? null : $value;
     }
     
     public function incrementRaw($key)
     {
-        return $this->driver->increment($this->generateKey($key));
+        return $this->driverCache->increment($this->generateKey($key));
     }
 
     public function decrementRaw($key)
     {
-        return $this->driver->decrement($this->generateKey($key));
+        return $this->driverCache->decrement($this->generateKey($key));
     }
     
     public function deleteRaw($key)
     {
-        return $this->driver->delete($this->generateKey($key));
+        return $this->driverCache->delete($this->generateKey($key));
     }
     
     public function getResultCode()
     {
-        return $this->driver->getResultCode();
+        return $this->driverCache->getResultCode();
     }
 }    

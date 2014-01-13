@@ -17,9 +17,9 @@ class SFM_Cache_File extends SFM_Cache
      */
     protected function _get($key)
     {
-        $value = $this->driver->get($this->generateKey($key));
+        $value = $this->driverCache->get($this->generateKey($key));
         $returnValue = ($value === false) ? null : $value;
-        if(($returnValue == null) && ($this->driver->getResultCode() != Memcached::RES_NOTFOUND))
+        if(($returnValue == null) && ($this->driverCache->getResultCode() != Memcached::RES_NOTFOUND))
             throw new SFM_Exception_Memcached('Server is down');
         else 
             return $returnValue;    
