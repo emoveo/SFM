@@ -52,7 +52,7 @@ class SFM_DB implements SFM_Transaction_Engine, SFM_MonitorableInterface
 
             if (is_array($this->config->getInitialQueries())) {
                 foreach ($this->config->getInitialQueries() as $query) {
-                    $this->db->query($query);
+                    $this->db->query($query,array());
                 }
             }
             
