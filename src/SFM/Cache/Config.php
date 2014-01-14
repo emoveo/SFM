@@ -1,9 +1,11 @@
 <?php
+namespace SFM\Cache;
 
-class SFM_Config_Cache
+class Config
 {
     protected $host;
     protected $port;
+    protected $driver;
     protected $prefix = '';
     protected $isDisabled = true;
 
@@ -24,6 +26,25 @@ class SFM_Config_Cache
     public function getHost()
     {
         return $this->host;
+    }
+
+    /**
+     * @param string $driver
+     * @return $this
+     */
+    public function setDriver($driver)
+    {
+        $this->driver = $driver;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getDriver()
+    {
+        return $this->driver;
     }
 
     /**

@@ -39,7 +39,7 @@ abstract class SFM_Value implements SFM_Transaction_Restorable
      */
     protected function getCacheKeyBy(array $dependency, $postfix = '')
     {
-        $key = get_class($this) . SFM_Cache_Memory::KEY_DILIMITER;
+        $key = get_class($this) . SFM\Cache\CacheProvider::KEY_DELIMITER;
 
         foreach ($dependency as $item) {
            $key .= $item->getCacheKey();
@@ -87,7 +87,7 @@ abstract class SFM_Value implements SFM_Transaction_Restorable
     public function get()
     {
         if (false === isset($this->value)) {
-            $value = SFM_Manager::getInstance()->getCacheMemory()->getRaw($this->getCacheKey());
+            $value = SFM_Manager::getInstance()->getCache()->getRaw($this->getCacheKey());
             if (null !== $value) {
                 $this->value = $value;
             } else {
@@ -109,7 +109,7 @@ abstract class SFM_Value implements SFM_Transaction_Restorable
         $this->objectState = $this->value;
         $this->value = $value;
 
-        SFM_Manager::getInstance()->getCacheMemory()->setValue($this->getCacheKey(), $this, $this->expiration);
+        SFM_Manager::getInstance()->getCache()->setValue($this->getCacheKey(), $this, $this->expiration);
 
         return $this->value;
     }
@@ -122,7 +122,7 @@ abstract class SFM_Value implements SFM_Transaction_Restorable
         $this->objectState = null;
         $this->value = null;
 
-        SFM_Manager::getInstance()->getCacheMemory()->deleteRaw($this->getCacheKey());
+        SFM_Manager::getInstance()->getCache()->deleteRaw($this->getCacheKey());
     }
 
     /**

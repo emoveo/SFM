@@ -13,13 +13,14 @@ class TransactionEntityTest extends PHPUnit_Framework_TestCase
 
     protected function connect()
     {
-        $cacheConfig = new SFM_Config_Cache();
+        $cacheConfig = new \SFM\Cache\Config();
         $cacheConfig->setHost("localhost")
             ->setIsDisabled(false)
             ->setPort(11211)
-            ->setPrefix("test");
+            ->setPrefix("test")
+            ->setDriver(\SFM\Cache\Adapter::MEMCACHED);
 
-        $this->sfm->getCacheMemory()->init($cacheConfig)->connect();
+        $this->sfm->getCache()->init($cacheConfig)->connect();
 
         $dbConfig = new SFM_Config_Database();
         $dbConfig->setDriver("Pdo_Mysql")
@@ -56,7 +57,7 @@ class TransactionEntityTest extends PHPUnit_Framework_TestCase
         $engines[] = $this->sfm->getTransaction();
 
         $this->sfm->getIdentityMap()->disable();
-        $this->sfm->getCacheMemory()->flush();
+        $this->sfm->getCache()->flush();
         $this->sfm->getTransaction()->beginTransaction();
 
         /** @var SFM_Transaction_Engine $engine */
@@ -93,7 +94,7 @@ class TransactionEntityTest extends PHPUnit_Framework_TestCase
         $engines[] = $this->sfm->getTransaction();
 
         $this->sfm->getIdentityMap()->disable();
-        $this->sfm->getCacheMemory()->flush();
+        $this->sfm->getCache()->flush();
         $this->sfm->getTransaction()->beginTransaction();
 
         /** @var SFM_Transaction_Engine $engine */
@@ -147,6 +148,7 @@ class TransactionEntityTest extends PHPUnit_Framework_TestCase
     public function testFlushCommitValue()
     {
         $value = new Value_Mock();
+        $this->sfm->getCache()->flush();
         $this->sfm->getTransaction()->beginTransaction();
         $this->sfm->getDb()->update("UPDATE `mock` SET `text` = 'test1' WHERE `id` = 1");
         $this->assertEquals("test1", $value->get(), "Value 1 fetched in transaction is not valid");
@@ -161,6 +163,7 @@ class TransactionEntityTest extends PHPUnit_Framework_TestCase
     public function testFlushRollbackValue()
     {
         $value = new Value_Mock();
+        $this->sfm->getCache()->flush();
         $this->sfm->getTransaction()->beginTransaction();
         $this->sfm->getDb()->update("UPDATE `mock` SET `text` = 'test1' WHERE `id` = 1");
         $this->assertEquals("test1", $value->get(), "Value 1 fetched in transaction is not valid");
@@ -171,8 +174,4 @@ class TransactionEntityTest extends PHPUnit_Framework_TestCase
         $this->sfm->getTransaction()->rollbackTransaction();
         $this->assertEquals("test", $value->get(), "Value 4 fetched in transaction is not valid");
     }
-
-
-
-
 }

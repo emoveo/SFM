@@ -12,14 +12,9 @@ abstract class SFM_Counter extends SFM_Value
      */
     public function increment()
     {
-        $value = SFM_Manager::getInstance()->getCacheMemory()->incrementRaw($this->getCacheKey());
-        if (false === $value) {
-            $value = $this->load();
-            ++$value;
-            $this->set($value);
-        } else {
-            $this->value = $value;
-        }
+        $value = $this->load();
+        ++$value;
+        $this->set($value);
 
         return $this->value;
     }
@@ -31,14 +26,9 @@ abstract class SFM_Counter extends SFM_Value
      */
     public function decrement()
     {
-        $value = SFM_Manager::getInstance()->getCacheMemory()->decrementRaw($this->getCacheKey());
-        if (false === $value) {
-            $value = $this->load();
-            --$value;
-            $this->set($value);
-        } else {
-            $this->value = $value;
-        }
+        $value = $this->load();
+        --$value;
+        $this->set($value);
 
         return $this->value;
     }

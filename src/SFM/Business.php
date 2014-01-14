@@ -3,7 +3,7 @@
  * Abstract class, ANY business object (either Entity or Aggregate)
  * 
  */
-abstract class SFM_Business
+abstract class SFM_Business implements SFM_Transaction_Restorable
 {
     /**
      * Mapper which created this business object

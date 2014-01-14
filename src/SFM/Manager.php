@@ -53,36 +53,24 @@ class SFM_Manager
     }
 
     /**
-     * @return SFM_Cache_Memory
+     * @return SFM\Cache\CacheProvider
      */
-    public function getCacheMemory()
+    public function getCache()
     {
         if (null === $this->cacheMemory) {
-            $this->cacheMemory = new SFM_Cache_Memory();
+            $this->cacheMemory = new SFM\Cache\CacheProvider();
         }
 
         return $this->cacheMemory;
     }
 
     /**
-     * @return SFM_Cache_File
-     */
-    public function getCacheFile()
-    {
-        if (null === $this->cacheFile) {
-            $this->cacheFile = new SFM_Cache_File();
-        }
-
-        return $this->cacheFile;
-    }
-
-    /**
-     * @return SFM_Cache_Session
+     * @return \SFM\Cache\Session
      */
     public function getCacheSession()
     {
         if (null === $this->cacheSession) {
-            $this->cacheSession = new SFM_Cache_Session();
+            $this->cacheSession = new \SFM\Cache\Session();
         }
 
         return $this->cacheSession;
@@ -105,7 +93,7 @@ class SFM_Manager
         if (null === $this->transaction) {
             $this->transaction = new SFM_Transaction();
             $this->transaction->addTransactionEngine($this->getDb());
-            $this->transaction->addTransactionEngine($this->getCacheMemory());
+            $this->transaction->addTransactionEngine($this->getCache());
             $this->transaction->addTransactionEngine($this->getIdentityMap());
         }
 

@@ -3,6 +3,7 @@
     "type": "library",
     "autoload": {
         "psr-0": {
+            "SFM\\": "src/",
             "SFM_": "src/",
             "": "tests/"
         }

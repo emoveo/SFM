@@ -70,7 +70,7 @@ abstract class SFM_Mapper
         $this->entityClassName = str_replace('Mapper', 'Entity', $className);
         $this->aggregateClassName = str_replace('Mapper', 'Aggregate', $className);
         $this->idField = 'id';
-        $this->aggregateCachePrefix = $this->aggregateClassName . SFM_Cache_Memory::KEY_DILIMITER;
+        $this->aggregateCachePrefix = $this->aggregateClassName . SFM\Cache\CacheProvider::KEY_DELIMITER;
 
         SFM_Injector::inject($this);
     }
@@ -131,7 +131,7 @@ abstract class SFM_Mapper
             }
             //Second looks to Cache
             $cacheKey = $this->getEntityCacheKeyById($id);
-            $entity = SFM_Manager::getInstance()->getCacheMemory()->get($cacheKey);
+            $entity = SFM_Manager::getInstance()->getCache()->get($cacheKey);
 //          //aazon: check either Entity is Cacheable. We need this hack till we refactor updateEntity()
             if (null !== $entity && $entity->isCacheable()) {
                 return $entity;
@@ -163,7 +163,7 @@ abstract class SFM_Mapper
     {
         if ( $this->hasUniqueFields() && ($params = $this->getOneUniqueFromParams($params)) ) {
             $cacheKey = $this->getEntityCacheKeyByUniqueVals( $this->getUniqueVals($params) );
-            $entityId = SFM_Manager::getInstance()->getCacheMemory()->getRaw($cacheKey);
+            $entityId = SFM_Manager::getInstance()->getCache()->getRaw($cacheKey);
             if( null !== $entityId ) {
                 return $this->getEntityById( $entityId );
             }
@@ -176,7 +176,7 @@ abstract class SFM_Mapper
         //aazon: now we check either Entity is cacheable
         if( null !== $entity && $entity->isCacheable() ) {
             //to prevent unique fields mapping to empty cache object
-            if( null === SFM_Manager::getInstance()->getCacheMemory()->get($entity->getCacheKey())) {
+            if( null === SFM_Manager::getInstance()->getCache()->get($entity->getCacheKey())) {
                 $this->saveCached($entity);
             }
             $uniqueKey = array_keys($params);
@@ -330,7 +330,7 @@ abstract class SFM_Mapper
             }
             if( sizeof($changedUniqueKeys) != 0 ) {
                 foreach ($changedUniqueKeys as $key) {
-                    SFM_Manager::getInstance()->getCacheMemory()->delete($oldEntity->getCacheKeyByUniqueFields($key));
+                    SFM_Manager::getInstance()->getCache()->delete($oldEntity->getCacheKeyByUniqueFields($key));
                     $this->createUniqueFieldsCache( $newEntity, $key );
                 }
             }
@@ -348,14 +348,12 @@ abstract class SFM_Mapper
         //delete from identity map
         SFM_Manager::getInstance()->getIdentityMap()->deleteEntity($entity);
         //delete from Cache
-        $Cache = SFM_Manager::getInstance()->getCacheMemory();
-        $Cache->delete($entity->getCacheKey());
-        //@todo Delete tags, that are related only for this object (if we need to save memory space)
-        $Cache->resetTags($entity->getCacheTags());
+        $Cache = SFM_Manager::getInstance()->getCache();
+        $Cache->deleteEntity($entity);
         if($this->hasUniqueFields()) {
              foreach ( $this->uniqueFields as $uniqueKey ) {
                  $key = $entity->getCacheKeyByUniqueFields($uniqueKey);
-                 $Cache->delete( $key );
+                 $Cache->delete($key);
              }
         }
 
@@ -486,7 +484,7 @@ abstract class SFM_Mapper
     protected function getCachedAggregate($cacheKey,$loadEntities)
     {
         if ($cacheKey !== null) {
-            $aggregate = SFM_Manager::getInstance()->getCacheMemory()->get($cacheKey);
+            $aggregate = SFM_Manager::getInstance()->getCache()->get($cacheKey);
             if ($aggregate !== null) {
                 if( $loadEntities ) {
                     $aggregate->loadEntities();
@@ -546,7 +544,7 @@ abstract class SFM_Mapper
         $cachedIdentityMapVals = $this->getEntityMultiFromIdentityMap($this->entityClassName,$entityId);
         $entityId = array_diff($entityId,array_keys($cachedIdentityMapVals));
         
-        $memcachedVals = SFM_Manager::getInstance()->getCacheMemory()->getMulti( $this->getEntitiesCacheKeyByListId($entityId) );
+        $memcachedVals = SFM_Manager::getInstance()->getCache()->getMulti( $this->getEntitiesCacheKeyByListId($entityId) );
         $cachedVals = $cachedIdentityMapVals;
         if($memcachedVals){
             $cachedVals = array_merge($cachedVals,$memcachedVals);
@@ -579,7 +577,7 @@ abstract class SFM_Mapper
     public function saveListOfEntitiesInCache( array $entities )
     {
         if(sizeof($entities)>0) {
-            SFM_Manager::getInstance()->getCacheMemory()->setMulti($entities);
+            SFM_Manager::getInstance()->getCache()->setMulti($entities);
         }
     }
 
@@ -622,7 +620,7 @@ abstract class SFM_Mapper
 
     protected function getEntityCacheKeyById($id)
     {
-        return $this->entityClassName . SFM_Cache_Memory::KEY_DILIMITER . $id;
+        return $this->entityClassName . SFM\Cache\CacheProvider::KEY_DELIMITER . $id;
     }
 
     protected function getEntitiesCacheKeyByListId( array $ids)
@@ -636,12 +634,12 @@ abstract class SFM_Mapper
 
     protected function getEntityCacheKeyByUniqueVals( array $values )
     {
-        $key = $this->entityClassName . SFM_Cache_Memory::KEY_DILIMITER;
+        $key = $this->entityClassName . SFM\Cache\CacheProvider::KEY_DELIMITER;
         foreach ($values as $item) {
             if(is_string($item)) {
                 $item = mb_strtolower($item);
             }
-            $key .= SFM_Cache_Memory::KEY_DILIMITER . $item;
+            $key .= SFM\Cache\CacheProvider::KEY_DELIMITER . $item;
         }
         return $key;
     }
@@ -675,10 +673,10 @@ abstract class SFM_Mapper
     {
         $cacheKey = $this->aggregateCachePrefix;
         if( $prefix !== '' ) {
-            $cacheKey .= $prefix . SFM_Cache_Memory::KEY_DILIMITER;
+            $cacheKey .= $prefix . SFM\Cache\CacheProvider::KEY_DELIMITER;
         }
         if( null != $entity ) {
-            $cacheKey .= get_class($entity) . SFM_Cache_Memory::KEY_DILIMITER . $entity->getId();
+            $cacheKey .= get_class($entity) . SFM\Cache\CacheProvider::KEY_DELIMITER . $entity->getId();
         }
         return $cacheKey;
     }
@@ -692,7 +690,7 @@ abstract class SFM_Mapper
      */
     public function getAggregateCacheKeyByParentAndChildEntity(SFM_Entity $parent, SFM_Entity $child, $prefix = '')
     {
-        $cacheKey = $this->getAggregateCacheKeyByParentEntity($parent,$child->getId()).SFM_Cache_Memory::KEY_DILIMITER.$prefix;
+        $cacheKey = $this->getAggregateCacheKeyByParentEntity($parent,$child->getId()).SFM\Cache\CacheProvider::KEY_DELIMITER.$prefix;
         return $cacheKey;
     }
 
@@ -706,9 +704,8 @@ abstract class SFM_Mapper
     {
         $cacheKey = '';
         foreach($entityList as $entity){
-            $cacheKey.= $this->getAggregateCacheKeyByParentEntity($entity).SFM_Cache_Memory::KEY_DILIMITER;
+            $cacheKey.= $this->getAggregateCacheKeyByParentEntity($entity).SFM\Cache\CacheProvider::KEY_DELIMITER;
         }
-        //$cacheKey = $this->getAggregateCacheKeyByParentEntity($parent,$child->getId()).SFM_Cache_Memory::KEY_DILIMITER.$prefix;
         return $cacheKey.$prefix;
     }
 
@@ -829,12 +826,11 @@ abstract class SFM_Mapper
     {
         $cacheKey = $object->getCacheKey();
         if (null !== $cacheKey) {
-            $tags = $object->getCacheTags();
 
-            $Cache = SFM_Manager::getInstance()->getCacheMemory();
+            $Cache = SFM_Manager::getInstance()->getCache();
             //reset only for entities
             if($object instanceof SFM_Entity) {
-                $Cache->resetTags($tags);
+                $Cache->deleteEntity($object);
             }
             $Cache->set($object);
         }
@@ -906,7 +902,7 @@ abstract class SFM_Mapper
     {
         if($this->hasUniqueFields()) {
             $key = $entity->getCacheKeyByUniqueFields($uniqueKey);
-            SFM_Manager::getInstance()->getCacheMemory()->setRaw($key, $entity->getId());
+            SFM_Manager::getInstance()->getCache()->setRaw($key, $entity->getId());
         }
     }
 

@@ -1,11 +1,10 @@
 <?php
+namespace SFM\Cache\Transaction;
 
-/**
- * Manage transactions on Cache Layer
- *
- * @author andry
- */
-class SFM_Cache_Transaction 
+use SFM\Cache\CacheException;
+use SFM\Cache\CacheProvider;
+
+class TransactionCache implements \SFM_Transaction_Engine
 {
     /** @var array Entity transaction log */
     protected $log;
@@ -18,12 +17,15 @@ class SFM_Cache_Transaction
 
     protected $deletedLog;
 
-     /** @var \SFM_Cache */
+     /** @var CacheProvider */
     protected $cache;
 
     protected $isStarted = false;
 
-    public function __construct(SFM_Cache_Interface $cache)
+    /**
+     * @param CacheProvider $cache
+     */
+    public function __construct(CacheProvider $cache)
     {
         $this->cache = $cache;
     }
@@ -31,18 +33,20 @@ class SFM_Cache_Transaction
     /**
      * @return bool
      */
-    public function isStarted()
+    public function isTransaction()
     {
         return $this->isStarted;
     }
 
     /**
      * Begin transaction
+     * @return bool
+     * @throws CacheException
      */
-    public function begin()
+    public function beginTransaction()
     {
         if ($this->isStarted) {
-            throw new SFM_Exception_Transaction("Перед вызовом `begin` необходимо завершить прошлую транзакцию");
+            throw new CacheException("SFM/Cache: attempt to begin transaction before active transaction was complete");
         }
 
         $this->isStarted = true;
@@ -54,12 +58,13 @@ class SFM_Cache_Transaction
 
     /**
      * Commit transaction
-     * @throws SFM_Exception_Transaction
+     * @return bool
+     * @throws CacheException
      */
-    public function commit()
+    public function commitTransaction()
     {
         if (false === $this->isStarted) {
-            throw new SFM_Exception_Transaction("Перед вызовом `commit` необходимо начать транзакцию");
+            throw new CacheException("SFM/Cache: attempt to commit transaction but no transaction was started");
         }
 
         $this->isStarted = false;
@@ -75,34 +80,38 @@ class SFM_Cache_Transaction
         foreach ($this->deletedLog as $key) {
             $this->cache->delete($key);
         }
+
+        return true;
     }
 
     /**
      * Rollback transaction
-     * @throws SFM_Exception_Transaction
+     * @return bool
+     * @throws CacheException
      */
-    public function rollback()
+    public function rollbackTransaction()
     {
         if (false === $this->isStarted) {
-            throw new SFM_Exception_Transaction("Перед вызовом `rollback` необходимо начать транзакцию");
+            throw new CacheException("SFM/Cache: attempt to rollback transaction but no transaction was started");
         }
 
         $this->isStarted = false;
 
         foreach ($this->resetableLog as $value) {
 
-            /** @var $object SFM_Transaction_Restorable */
+            /** @var $object \SFM_Transaction_Restorable */
             $object = $value['object'];
             $object->restoreObjectState($value['state']);
         }
+
+        return true;
     }
 
     /**
-     * @param SFM_Business $value
+     * @param \SFM_Business $value
      * @param integer|null $expiration
-     * @throws SFM_Exception_Transaction
      */
-    public function logBusiness(SFM_Business $value, $expiration = null)
+    public function logBusiness(\SFM_Business $value, $expiration = null)
     {
         if (is_null($expiration)) {
             $expiration = $value->getExpires();
@@ -113,14 +122,18 @@ class SFM_Cache_Transaction
         $this->logResetable($value);
     }
 
+    /**
+     * @param string $key
+     */
     public function logDeleted($key)
     {
         $this->deletedLog[] = $key;
         $this->cancelSet($key);
-
-        return true;
     }
 
+    /**
+     * @param string $key
+     */
     protected function cancelSet($key)
     {
         if ($key = array_search($key, $this->rawLog)) {
@@ -137,6 +150,9 @@ class SFM_Cache_Transaction
         }
     }
 
+    /**
+     * @param string $key
+     */
     protected function cancelDelete($key)
     {
         if ($key = array_search($key, $this->deletedLog)) {
@@ -144,6 +160,11 @@ class SFM_Cache_Transaction
         }
     }
 
+    /**
+     * @param string $key
+     * @param string $value
+     * @param int $expiration
+     */
     public function logRaw($key, $value, $expiration = 0)
     {
         $this->rawLog[$key] = array(
@@ -152,12 +173,10 @@ class SFM_Cache_Transaction
         );
 
         $this->cancelDelete($key);
-
-        return true;
     }
 
     /**
-     * @param string$key
+     * @param string $key
      * @return mixed|null
      */
     public function getRaw($key)
@@ -171,15 +190,18 @@ class SFM_Cache_Transaction
         return $value;
     }
 
-    public function logResetable(SFM_Transaction_Restorable $value)
+    /**
+     * @param \SFM_Transaction_Restorable $value
+     */
+    public function logResetable(\SFM_Transaction_Restorable $value)
     {
         if (false === isset($this->resetableLog[$value->getObjectIdentifier()])) {
             $this->resetableLog[$value->getObjectIdentifier()] = array('object' => $value, 'state' => $value->getObjectState());
         }
     }
     
-    /*
-     * @param SFM_Business[] $items
+    /**
+     * @param \SFM_Business[] $items
      * @param int $expiration
      */
     public function logMulti(array $items, $expiration = 0)
@@ -189,13 +211,23 @@ class SFM_Cache_Transaction
         }
     }
 
-    public function logRawMulti(array $items, $expiration = null)
+    /**
+     * @param array $items
+     * @param int $expiration
+     * @return bool
+     */
+    public function logRawMulti(array $items, $expiration = 0)
     {
         foreach ($items as $key => $value) {
             $this->logRaw($key, $value, $expiration);
         }
+
+        return true;
     }
-    
+
+    /**
+     * @return array
+     */
     public function getLog()
     {
         return $this->log;
