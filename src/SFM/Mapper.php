@@ -769,7 +769,7 @@ abstract class SFM_Mapper
             $conditions []= $quoteSymbol."{$key}".$quoteSymbol." = :{$key}";
         }
 
-        $sql = 'SELECT * FROM '.$this->tableName . (count($conditions) ?' WHERE ' . join(' AND ', $conditions) : '') . $groupBy . $orderBy . $limit;
+        $sql = 'SELECT * FROM '.SFM_Manager::getInstance()->getDb()->quoteIdentifier($this->tableName, true) . (count($conditions) ?' WHERE ' . join(' AND ', $conditions) : '') . $groupBy . $orderBy . $limit;
 
         return $sql;
     }
