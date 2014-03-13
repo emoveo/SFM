@@ -358,7 +358,9 @@ abstract class SFM_Mapper
         }
 
         //Then delete from DB
-        $sql = "DELETE FROM {$this->tableName} WHERE {$this->idField}=:{$this->idField}";
+        $tableName = SFM_Manager::getInstance()->getDb()->quoteIdentifier($this->tableName, true);
+
+        $sql = "DELETE FROM {$tableName} WHERE {$this->idField}=:{$this->idField}";
         return SFM_Manager::getInstance()->getDb()->delete($sql, array($this->idField => $entity->getInfo($this->idField)));
     }
 
@@ -590,7 +592,7 @@ abstract class SFM_Mapper
             $calculated = $this->getCalculatedExpressions();
             if(!empty($calculated))
                 $sql.= ', '.implode(', ',$calculated);
-            $sql.= ' FROM '.$this->tableName.' WHERE '. $this->getIdField() .' IN ('. implode(",",$entityId) .')';
+            $sql.= ' FROM '.SFM_Manager::getInstance()->getDb()->quoteIdentifier($this->tableName, true).' WHERE '. $this->getIdField() .' IN ('. implode(",",$entityId) .')';
             $data = SFM_Manager::getInstance()->getDb()->fetchAll($sql);
             
             foreach ($data as $row) {
