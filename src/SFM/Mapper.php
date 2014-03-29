@@ -281,7 +281,8 @@ abstract class SFM_Mapper
         //First update the DB
         $updates = array();
         foreach ($params as $key => $value) {
-            $updates []= "{$key}=:{$key}";
+            $field = SFM_Manager::getInstance()->getDb()->quoteIdentifier($key, true);
+            $updates []= "{$field}=:{$key}";
         }
 
         $params[$this->idField] = $entity->getInfo($this->idField);
