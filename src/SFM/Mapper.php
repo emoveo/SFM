@@ -391,7 +391,7 @@ abstract class SFM_Mapper
         $keys = array();
         $values = array();
         foreach ($proto as $key => $value) {
-            $keys[] = $key;
+            $keys[] = SFM_Manager::getInstance()->getDb()->quoteIdentifier($key, true);
             $values[] = ':'.$key;
         }
 
