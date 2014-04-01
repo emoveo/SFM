@@ -146,7 +146,9 @@ class SFM_DB implements SFM_Transaction_Engine, SFM_MonitorableInterface
             $timer->stop();
         }
 
-        return $stmt->current();
+        $result = $stmt->current();
+
+        return $result ? (array) $result : null;
     }
 
     /**
