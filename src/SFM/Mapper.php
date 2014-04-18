@@ -64,7 +64,7 @@ abstract class SFM_Mapper
     const SQL_SELECT_ID = '_select_id_from_';
     const SQL_PARAM_CONDITION = '_CONDITION_';
 
-    protected function __construct()
+    public function __construct()
     {
         $className = get_class($this);
         $this->entityClassName = str_replace('Mapper', 'Entity', $className);
