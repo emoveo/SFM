@@ -1,6 +1,6 @@
 <?php
 
-class SFM_Manager
+class SFM_Manager extends Pimple
 {
     protected static $instance;
 
@@ -10,34 +10,58 @@ class SFM_Manager
     public static function getInstance()
     {
         if (null === self::$instance) {
-            self::$instance = new SFM_Manager();
+            $container = new SFM_Manager();
+            $container->reset();
+
+            self::$instance = $container;
         }
 
         return self::$instance;
     }
-
-    protected $db;
-    protected $cacheMemory;
-    protected $cacheFile;
-    protected $cacheSession;
-    protected $identityMap;
-    protected $transaction;
-    protected $monitor;
 
     /**
      * @return $this
      */
     public function reset()
     {
-        $this->db = null;
-        $this->cacheMemory = null;
-        $this->cacheFile = null;
-        $this->cacheSession = null;
-        $this->identityMap = null;
-        $this->transaction = null;
-        $this->monitor = null;
+        $this['db'] = $this->share(function () {
+            return new SFM_DB();
+        });
+
+        $this['cacheMemory'] = $this->share(function () {
+            return new SFM\Cache\CacheProvider();
+        });
+
+        $this['cacheSession'] = $this->share(function () {
+            return new \SFM\Cache\Session();
+        });
+
+        $this['identityMap'] = $this->share(function () {
+            return new SFM_IdentityMap();
+        });
+
+        $this['transaction'] = $this->share(function () {
+            $transaction = new SFM_Transaction();
+            $transaction->addTransactionEngine($this->getDb());
+            $transaction->addTransactionEngine($this->getCache());
+            $transaction->addTransactionEngine($this->getIdentityMap());
+
+            return $transaction;
+        });
+
+        $this['repository'] = $this->share(function () {
+            return new \SFM\Repository();
+        });
 
         return $this;
+    }
+
+    /**
+     * @return \SFM\Repository
+     */
+    public function getRepository()
+    {
+        return $this["repository"];
     }
 
     /**
@@ -45,11 +69,7 @@ class SFM_Manager
      */
     public function getDb()
     {
-        if (null === $this->db) {
-            $this->db = new SFM_DB();
-        }
-
-        return $this->db;
+        return $this['db'];
     }
 
     /**
@@ -57,11 +77,7 @@ class SFM_Manager
      */
     public function getCache()
     {
-        if (null === $this->cacheMemory) {
-            $this->cacheMemory = new SFM\Cache\CacheProvider();
-        }
-
-        return $this->cacheMemory;
+        return $this['cacheMemory'];
     }
 
     /**
@@ -69,11 +85,7 @@ class SFM_Manager
      */
     public function getCacheSession()
     {
-        if (null === $this->cacheSession) {
-            $this->cacheSession = new \SFM\Cache\Session();
-        }
-
-        return $this->cacheSession;
+        return $this['cacheSession'];
     }
 
     /**
@@ -81,22 +93,14 @@ class SFM_Manager
      */
     public function getIdentityMap()
     {
-        if (null === $this->identityMap) {
-            $this->identityMap = new SFM_IdentityMap();
-        }
-
-        return $this->identityMap;
+        return $this['identityMap'];
     }
 
+    /**
+     * @return SFM_Transaction
+     */
     public function getTransaction()
     {
-        if (null === $this->transaction) {
-            $this->transaction = new SFM_Transaction();
-            $this->transaction->addTransactionEngine($this->getDb());
-            $this->transaction->addTransactionEngine($this->getCache());
-            $this->transaction->addTransactionEngine($this->getIdentityMap());
-        }
-
-        return $this->transaction;
+        return $this['transaction'];
     }
 }

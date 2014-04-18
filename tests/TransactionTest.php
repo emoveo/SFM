@@ -65,13 +65,13 @@ class TransactionEntityTest extends PHPUnit_Framework_TestCase
             $this->assertEquals(true, $engine->isTransaction(), get_class($engine) . " is not started");
         }
 
-        $entity = Mapper_Mock::getInstance()->getEntityById(1);
+        $entity = $this->sfm->getRepository()->get('Mapper_Mock')->getEntityById(1);
         $this->assertEquals("test", $entity->getText(), "Text before transaction update is not valid");
 
         $entity->update(array("text" => "test2"));
         $this->assertEquals("test2", $entity->getText(), "Text after transaction update is not valid");
 
-        $entity = Mapper_Mock::getInstance()->getEntityById(1);
+        $entity = $this->sfm->getRepository()->get('Mapper_Mock')->getEntityById(1);
         $this->assertEquals("test2", $entity->getText(), "Text reloaded after transaction update is not valid");
 
         $this->sfm->getTransaction()->commitTransaction();
@@ -82,7 +82,7 @@ class TransactionEntityTest extends PHPUnit_Framework_TestCase
         }
 
         $dbData = $this->sfm->getDb()->fetchLine("SELECT * FROM `mock` WHERE `id` = 1");
-        $entity = Mapper_Mock::getInstance()->getEntityById(1);
+        $entity = $this->sfm->getRepository()->get('Mapper_Mock')->getEntityById(1);
 
         $this->assertEquals("test2", $dbData["text"], "Text in db is not expected");
         $this->assertEquals("test2", $entity->getText(), "Text in cache is not expected");
@@ -102,13 +102,13 @@ class TransactionEntityTest extends PHPUnit_Framework_TestCase
             $this->assertEquals(true, $engine->isTransaction(), get_class($engine) . " is not started");
         }
 
-        $entity = Mapper_Mock::getInstance()->getEntityById(1);
+        $entity = $this->sfm->getRepository()->get('Mapper_Mock')->getEntityById(1);
         $this->assertEquals("test", $entity->getText(), "Text before transaction update is not valid");
 
         $entity->update(array("text" => "test2"));
         $this->assertEquals("test2", $entity->getText(), "Text after transaction update is not valid");
 
-        $entity = Mapper_Mock::getInstance()->getEntityById(1);
+        $entity = $this->sfm->getRepository()->get('Mapper_Mock')->getEntityById(1);
         $this->assertEquals("test2", $entity->getText(), "Text reloaded after transaction update is not valid");
 
         $this->sfm->getTransaction()->rollbackTransaction();
@@ -119,7 +119,7 @@ class TransactionEntityTest extends PHPUnit_Framework_TestCase
         }
 
         $dbData = $this->sfm->getDb()->fetchLine("SELECT * FROM `mock` WHERE `id` = 1");
-        $entity = Mapper_Mock::getInstance()->getEntityById(1);
+        $entity = $this->sfm->getRepository()->get('Mapper_Mock')->getEntityById(1);
 
         $this->assertEquals("test", $dbData["text"], "Text in db is not expected");
         $this->assertEquals("test", $entity->getText(), "Text in cache is not expected");

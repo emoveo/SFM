@@ -223,7 +223,7 @@ abstract class SFM_Entity extends SFM_Business implements SFM_Transaction_Restor
     public function __wakeup()
     {
         $mapperClassName = str_replace('Entity', 'Mapper', get_class($this));
-        $this->mapper = call_user_func(array($mapperClassName, 'getInstance'));
+        $this->mapper = SFM_Manager::getInstance()->getRepository()->get($mapperClassName);
 
         SFM_Injector::inject($this);
     }

@@ -64,8 +64,24 @@ abstract class SFM_Mapper
     const SQL_SELECT_ID = '_select_id_from_';
     const SQL_PARAM_CONDITION = '_CONDITION_';
 
-    public function __construct()
+    /** @var \SFM\Repository */
+    protected $repository;
+
+    /**
+     * @return \SFM\Repository
+     */
+    public function getRepository()
     {
+        return $this->repository;
+    }
+
+    /**
+     * @param \SFM\Repository $repository
+     */
+    public function __construct(\SFM\Repository $repository)
+    {
+        $this->repository = $repository;
+
         $className = get_class($this);
         $this->entityClassName = str_replace('Mapper', 'Entity', $className);
         $this->aggregateClassName = str_replace('Mapper', 'Aggregate', $className);
@@ -883,7 +899,7 @@ abstract class SFM_Mapper
                 }
 
                 if (class_exists($mapperClassName)) {
-                    $mapper = new $mapperClassName;
+                    $mapper = SFM_Manager::getInstance()->getRepository()->get($mapperClassName);
                     $fieldValue = $business->getInfo($fieldName);
 
                     return $fieldValue !== null ? $mapper->getEntityById($fieldValue) : null;
