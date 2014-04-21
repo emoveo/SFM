@@ -65,8 +65,6 @@ abstract class SFM_Aggregate extends SFM_Business implements Iterator, Countable
         $this->cacheKey = $cacheKey;
         $this->entities = array();
 
-        SFM_Injector::inject($this);
-
         $idField = $this->mapper->getIdField();
         
         foreach ($aggregateProto as $entityProto) {
@@ -307,8 +305,6 @@ abstract class SFM_Aggregate extends SFM_Business implements Iterator, Countable
         $this->mapper = call_user_func(array($mapperClassName, 'getInstance'));
 
         $this->entities = array();
-
-        SFM_Injector::inject($this);
     }
 
     public function getListEntitiesId()

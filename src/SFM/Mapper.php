@@ -49,9 +49,6 @@ abstract class SFM_Mapper
      */
     protected $aggregateClassName;
 
-    /** @var \Symfony\Component\DependencyInjection\ContainerInterface */
-    protected $container;
-
     const SQL_PARAM_LIMIT = '_LIMIT_';
     const SQL_PARAM_ORDER_BY = '_ORDER_BY_';
     const SQL_FIELD = '_field_';
@@ -87,17 +84,6 @@ abstract class SFM_Mapper
         $this->aggregateClassName = str_replace('Mapper', 'Aggregate', $className);
         $this->idField = 'id';
         $this->aggregateCachePrefix = $this->aggregateClassName . SFM\Cache\CacheProvider::KEY_DELIMITER;
-
-        SFM_Injector::inject($this);
-    }
-
-    /**
-     * Inject DI container
-     * @param Symfony\Component\DependencyInjection\ContainerInterface $container
-     */
-    public function setContainer(\Symfony\Component\DependencyInjection\ContainerInterface $container = null)
-    {
-        $this->container = $container;
     }
 
     public function getTableName()

@@ -31,8 +31,6 @@ abstract class SFM_Entity extends SFM_Business implements SFM_Transaction_Restor
     {
         $this->proto = $proto;
         $this->mapper = $mapper;
-
-        SFM_Injector::inject($this);
     }
 
     /**
@@ -224,8 +222,6 @@ abstract class SFM_Entity extends SFM_Business implements SFM_Transaction_Restor
     {
         $mapperClassName = str_replace('Entity', 'Mapper', get_class($this));
         $this->mapper = SFM_Manager::getInstance()->getRepository()->get($mapperClassName);
-
-        SFM_Injector::inject($this);
     }
     
     /**
