@@ -5,7 +5,7 @@ abstract class AbstractQueryBuilder
 {
     protected $criteria;
     protected $sql = null;
-    protected $vars = null;
+    protected $vars = array();
 
     /**
      * @return string
