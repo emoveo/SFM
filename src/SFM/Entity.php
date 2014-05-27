@@ -162,7 +162,11 @@ abstract class SFM_Entity extends SFM_Business implements SFM_Transaction_Restor
             }                
         }
         $this->mapper->updateUniqueFields($this, $oldEntity);
-        return $this->mapper->updateEntity($params, $this);
+        $result = $this->mapper->updateEntity($params, $this);
+
+        SFM_Manager::getInstance()->getEventBus()->dispatch(\SFM\Event\EntityUpdatedEvent::NAME, new \SFM\Event\EntityUpdatedEvent($this, $oldEntity));
+
+        return $result;
     }
     
     /**

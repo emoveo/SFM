@@ -40,6 +40,10 @@ class SFM_Manager extends Pimple
             return new SFM_IdentityMap();
         });
 
+        $this['eventBus'] = $this->share(function () {
+            return new \Symfony\Component\EventDispatcher\EventDispatcher();
+        });
+
         $this['transaction'] = $this->share(function () {
             $transaction = new SFM_Transaction();
             $transaction->addTransactionEngine($this->getDb());
@@ -62,6 +66,14 @@ class SFM_Manager extends Pimple
     public function getRepository()
     {
         return $this["repository"];
+    }
+
+    /**
+     * @return \Symfony\Component\EventDispatcher\EventDispatcher
+     */
+    public function getEventBus()
+    {
+        return $this['eventBus'];
     }
 
     /**
