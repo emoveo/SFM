@@ -328,13 +328,20 @@ abstract class SFM_Aggregate extends SFM_Business implements Iterator, Countable
 
     /**
      * Load All entity objects to aggregate
-     * @return void
+     * @returns $this
      */
     public function loadEntities()
     {
         $this->loadEntitiesByIds($this->listEntityId);
+
+        return $this;
     }
 
+    /**
+     * @param int $pageNum
+     * @param int|null $perPage
+     * @returns $this
+     */
     public function loadEntitiesForCurrentPage($pageNum, $perPage = null)
     {
         if ($perPage === null)
@@ -344,6 +351,8 @@ abstract class SFM_Aggregate extends SFM_Business implements Iterator, Countable
         --$pageNum;
         $ids = array_slice($this->getListEntitiesId(), $pageNum * $itpp, $itpp);
         $this->loadEntitiesByIds($ids);
+
+	return $this;
     }
 
     public function getItemsPerPage()
