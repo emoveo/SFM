@@ -50,7 +50,9 @@ class TagPacker
             $result = array();
             foreach ($rawData as $rawDataItem) {
                 $object = $this->unpack($rawDataItem);
-                $result[] = $object ? $object : null;
+                if($object !== null){
+                    $result[] = $object;
+                }
             }
         } else {
             $data = unserialize($rawData);
