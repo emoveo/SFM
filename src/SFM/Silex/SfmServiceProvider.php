@@ -3,26 +3,32 @@ namespace SFM\Silex;
 
 use Silex\Application;
 use Silex\ServiceProviderInterface;
+use SFM\Database\Config;
 
 class SfmServiceProvider implements ServiceProviderInterface
 {
     public function register(Application $app)
     {
-        $app['sfm.service.config-db'] = $app->share(function () use ($app) {
-            $sqlConfig = new \SFM_Config_Database();
+        $app['sfm'] = $app->share(function () {
+            return \SFM_Manager::getInstance();
+        });
+
+        $app['sfm']['db_config'] = $app['sfm']->share(function () use ($app) {
+            $sqlConfig = new Config();
             $sqlConfig->setHost($app["sfm.db"]["hostname"])
                       ->setUser($app["sfm.db"]["username"])
                       ->setPass($app["sfm.db"]["password"])
                       ->setDb($app["sfm.db"]["database"])
-                      ->setDriver($app["sfm.db"]["driver"])
-                      ->setInitialQueries(array(
-                          'SET NAMES utf8'
-                      ));
+                      ->setDriver($app["sfm.db"]["driver"]);
+
+            if (isset($app['sfm.db']['queries']) && is_array($app['sfm.db']['queries'])) {
+                $sqlConfig->setInitialQueries($app['sfm.db']['queries']);
+            }
 
             return $sqlConfig;
         });
 
-        $app['sfm.service.config-cache'] = $app->share(function () use ($app) {
+        $app['sfm']['cache_config'] = $app['sfm']->share(function () use ($app) {
             $configCache = new \SFM\Cache\Config();
             $configCache->setHost($app["sfm.cache"]["hostname"])
                         ->setIsDisabled($app["sfm.cache"]["disabled"])
@@ -32,14 +38,11 @@ class SfmServiceProvider implements ServiceProviderInterface
             return $configCache;
         });
 
-        $app['sfm'] = $app->share(function () {
-            return \SFM_Manager::getInstance();
-        });
+
     }
 
     public function boot(Application $app)
     {
-        $app['sfm']->getDb()->init($app['sfm.service.config-db'])->connect();
-        $app['sfm']->getCache()->init($app['sfm.service.config-cache'])->connect();
+
     }
 }

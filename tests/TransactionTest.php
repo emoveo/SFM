@@ -22,7 +22,7 @@ class TransactionEntityTest extends PHPUnit_Framework_TestCase
 
         $this->sfm->getCache()->init($cacheConfig)->connect();
 
-        $dbConfig = new SFM_Config_Database();
+        $dbConfig = new \SFM\Database\Config();
         $dbConfig->setDriver("Pdo_Mysql")
             ->setHost("localhost")
             ->setUser("sfm")

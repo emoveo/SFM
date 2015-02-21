@@ -25,11 +25,19 @@ class SFM_Manager extends Pimple
     public function reset()
     {
         $this['db'] = $this->share(function () {
-            return new SFM_DB();
+            $db = new SFM_DB();
+            $db->init($this['db_config']);
+            $db->connect();
+
+            return $db;
         });
 
         $this['cacheMemory'] = $this->share(function () {
-            return new SFM\Cache\CacheProvider();
+            $cache = new \SFM\Cache\CacheProvider();
+            $cache->init($this['cache_config']);
+            $cache->connect();
+
+            return $cache;
         });
 
         $this['cacheSession'] = $this->share(function () {

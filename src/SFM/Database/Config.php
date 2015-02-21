@@ -1,6 +1,7 @@
 <?php
+namespace SFM\Database;
 
-class SFM_Config_Database
+class Config
 {
     protected $driver;
     protected $host;

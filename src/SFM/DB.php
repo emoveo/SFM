@@ -14,7 +14,7 @@ class SFM_DB implements SFM_Transaction_Engine, SFM_MonitorableInterface
     protected $transactionLevel = 0;
 
     /**
-     * @var SFM_Config_Database
+     * @var SFM\Database\Config
      */
     protected $config = null;
 
@@ -52,21 +52,21 @@ class SFM_DB implements SFM_Transaction_Engine, SFM_MonitorableInterface
 
             if (is_array($this->config->getInitialQueries())) {
                 foreach ($this->config->getInitialQueries() as $query) {
-                    $this->db->query($query,array());
+                    $this->db->query($query ,array());
                 }
             }
             
         } catch (Zend\Db\Adapter\Exception\ExceptionInterface $e) {
-            throw new SFM_Exception_DB('Error while connecting to db', array('error' => $e->getMessage()));
+            throw new SFM_Exception_DB('Error while connecting to db', array(), $e);
         }
 
     }
 
     /**
-     * @param SFM_Config_Database $config
+     * @param SFM\Database\Config $config
      * @return $this
      */
-    public function init(SFM_Config_Database $config)
+    public function init(SFM\Database\Config $config)
     {
         $this->config = $config;
 
