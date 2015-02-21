@@ -6,12 +6,8 @@ use Silex\ServiceProviderInterface;
 
 class SfmServiceProvider implements ServiceProviderInterface
 {
-    protected $app;
-
     public function register(Application $app)
-    { 
-        $this->app = $app;
-
+    {
         $app['sfm.service.config-db'] = $app->share(function () use ($app) {
             $sqlConfig = new \SFM_Config_Database();
             $sqlConfig->setHost($app["sfm.db"]["hostname"])
