@@ -1,12 +1,12 @@
 <?php
 class TransactionEntityTest extends PHPUnit_Framework_TestCase
 {
-    /** @var SFM_Manager */
+    /** @var \SFM\Manager */
     protected $sfm;
 
     public function setUp()
     {
-        $this->sfm = SFM_Manager::getInstance()->reset();
+        $this->sfm = \SFM\Manager::getInstance()->reset();
         $this->connect();
         $this->runFixture();
     }
@@ -60,7 +60,7 @@ class TransactionEntityTest extends PHPUnit_Framework_TestCase
         $this->sfm->getCache()->flush();
         $this->sfm->getTransaction()->beginTransaction();
 
-        /** @var SFM_Transaction_Engine $engine */
+        /** @var \SFM\Transaction\TransactionEngine $engine */
         foreach ($engines as $engine) {
             $this->assertEquals(true, $engine->isTransaction(), get_class($engine) . " is not started");
         }
@@ -76,7 +76,7 @@ class TransactionEntityTest extends PHPUnit_Framework_TestCase
 
         $this->sfm->getTransaction()->commitTransaction();
 
-        /** @var SFM_Transaction_Engine $engine */
+        /** @var \SFM\Transaction\TransactionEngine $engine */
         foreach ($engines as $engine) {
             $this->assertEquals(false, $engine->isTransaction(), get_class($engine) . " is not finished");
         }
@@ -97,7 +97,7 @@ class TransactionEntityTest extends PHPUnit_Framework_TestCase
         $this->sfm->getCache()->flush();
         $this->sfm->getTransaction()->beginTransaction();
 
-        /** @var SFM_Transaction_Engine $engine */
+        /** @var \SFM\Transaction\TransactionEngine $engine */
         foreach ($engines as $engine) {
             $this->assertEquals(true, $engine->isTransaction(), get_class($engine) . " is not started");
         }
@@ -113,7 +113,7 @@ class TransactionEntityTest extends PHPUnit_Framework_TestCase
 
         $this->sfm->getTransaction()->rollbackTransaction();
 
-        /** @var SFM_Transaction_Engine $engine */
+        /** @var \SFM\Transaction\TransactionEngine $engine */
         foreach ($engines as $engine) {
             $this->assertEquals(false, $engine->isTransaction(), get_class($engine) . " is not finished");
         }

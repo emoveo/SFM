@@ -2,9 +2,8 @@
     "name": "emoveo/sfm",
     "type": "library",
     "autoload": {
-        "psr-0": {
+        "psr-4": {
             "SFM\\": "src/",
-            "SFM_": "src/",
             "": "tests/"
         }
     },

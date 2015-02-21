@@ -1,5 +1,5 @@
 <?php
-class Entity_Mock extends SFM_Entity
+class Entity_Mock extends \SFM\Entity
 {
     /**
      * @return int
