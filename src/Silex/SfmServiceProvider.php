@@ -31,10 +31,15 @@ class SfmServiceProvider implements ServiceProviderInterface
 
         $app['sfm']['cache_config'] = $app['sfm']->share(function () use ($app) {
             $configCache = new \SFM\Cache\Config();
-            $configCache->setHost($app["sfm.cache"]["hostname"])
-                        ->setIsDisabled($app["sfm.cache"]["disabled"])
-                        ->setPort($app["sfm.cache"]["port"])
-                        ->setPrefix($app["sfm.cache"]["prefix"]);
+            if (isset($app["sfm.cache"])) {
+                $configCache->setHost($app["sfm.cache"]["hostname"])
+                    ->setDriver($app["sfm.cache"]["driver"])
+                    ->setIsDisabled($app["sfm.cache"]["disabled"])
+                    ->setPort($app["sfm.cache"]["port"])
+                    ->setPrefix($app["sfm.cache"]["prefix"]);
+            } else {
+                $configCache->setIsDisabled(true);
+            }
 
             return $configCache;
         });
