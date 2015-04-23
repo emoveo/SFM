@@ -14,7 +14,7 @@ class SfmServiceProvider implements ServiceProviderInterface
 
         $app['sfm.service.config-db'] = $app->share(function () use ($app) {
             $sqlConfig = new \SFM_Config_Database();
-            $sqlConfig->setDb($app["sfm.db"]["hostname"])
+            $sqlConfig->setHost($app["sfm.db"]["hostname"])
                       ->setUser($app["sfm.db"]["username"])
                       ->setPass($app["sfm.db"]["password"])
                       ->setDb($app["sfm.db"]["database"])
