@@ -1,9 +1,7 @@
 <?php
 namespace SFM;
 
-use SFM\Transaction\RestorableInterface;
-
-abstract class Aggregate extends Business implements \Iterator, \Countable, RestorableInterface
+abstract class Aggregate extends Business implements \Iterator, \Countable
 {
     /**
      * __wakeup load all object by id 
@@ -54,13 +52,13 @@ abstract class Aggregate extends Business implements \Iterator, \Countable, Rest
     
     /**
      * Constructor
-     *
+
      * @param array         $aggregateProto  Entity ids or prototypes array
      * @param Mapper    $mapper          Mapper Object
      * @param null|string   $cacheKey        Cache key for aggregate
      * @param bool          $loadEntities    Should load aggregate entities
-     *
-     * @throws Exception
+
+     * @throws BaseException
      */
     public function __construct(array $aggregateProto, Mapper $mapper, $cacheKey = null, $loadEntities = false)
     {
@@ -75,7 +73,7 @@ abstract class Aggregate extends Business implements \Iterator, \Countable, Rest
             if (false === is_array($entityProto)) {
                 $entityProto = array($idField => $entityProto);
             } else if (false === array_key_exists($idField, $entityProto)) {
-                throw new Exception('Entity proto does not contain id');
+                throw new BaseException('Entity proto does not contain id');
             }
 
             $this->listEntityId[] = $entityProto[$idField];
@@ -608,23 +606,5 @@ abstract class Aggregate extends Business implements \Iterator, \Countable, Rest
         $sortedEntityIds = array_slice($entityIds,$offset - 1,count($entityIds) - ($offset - 1));
         $sortedEntityIds = array_merge($sortedEntityIds,array_slice($entityIds,0,$offset - 1));
         return $this->mapper->createAggregate($sortedEntityIds,null,true);
-    }
-
-    public function getObjectIdentifier()
-    {
-        $identifier = $this->getCacheKey() ? $this->getCacheKey() : spl_object_hash($this);
-
-        return $identifier;
-    }
-
-    public function getObjectState()
-    {
-        return $this->objectState;
-    }
-
-    public function restoreObjectState($state)
-    {
-        $this->listEntityId = $state['listEntityId'];
-        $this->loadedListEntityId = $state['loadedListEntityId'];
     }
 }

@@ -1,7 +1,7 @@
 <?php
 namespace SFM;
 
-use \SFM\Cache\CacheProvider;
+use \SFM\Cache\CacheStrategy;
 
 /**
  * Abstract class for Data Mapping
@@ -85,7 +85,7 @@ abstract class Mapper
         $this->entityClassName = str_replace('Mapper', 'Entity', $className);
         $this->aggregateClassName = str_replace('Mapper', 'Aggregate', $className);
         $this->idField = 'id';
-        $this->aggregateCachePrefix = $this->aggregateClassName . CacheProvider::KEY_DELIMITER;
+        $this->aggregateCachePrefix = $this->aggregateClassName . CacheStrategy::KEY_DELIMITER;
     }
 
     public function getTableName()
@@ -141,7 +141,7 @@ abstract class Mapper
                 return $entity;
             }
         } else {
-            throw new Exception("Illegal argument type given; id: ".$id);
+            throw new BaseException("Illegal argument type given; id: ".$id);
         }
         //Then looks to DB. Check that Entity exists
         $entity = $this->getEntityFromDB(array($this->getIdField()=>$id));
@@ -172,7 +172,7 @@ abstract class Mapper
                 return $this->getEntityById( $entityId );
             }
         } else {
-            throw new Exception("Unique fields aren't set");
+            throw new BaseException("Unique fields aren't set");
         }
 
         $entity = $this->getEntityFromDB($params);
@@ -221,7 +221,7 @@ abstract class Mapper
      * @param Entity $entity
      * @param array $uniqueKey One of the keys. It must contain only field names
      * @return string
-     * @throws Exception
+     * @throws BaseException
      */
     public function getEntityCacheKeyByUniqueFields(Entity $entity, array $uniqueKey)
     {
@@ -238,7 +238,7 @@ abstract class Mapper
                     }
                     $uniqueVals[] = $val;
                 } else {
-                    throw new Exception('Unknown field - '.$item);
+                    throw new BaseException('Unknown field - '.$item);
                 }
             }
         }
@@ -615,7 +615,7 @@ abstract class Mapper
 
     protected function getEntityCacheKeyById($id)
     {
-        return $this->entityClassName . CacheProvider::KEY_DELIMITER . $id;
+        return $this->entityClassName . CacheStrategy::KEY_DELIMITER . $id;
     }
 
     protected function getEntitiesCacheKeyByListId( array $ids)
@@ -629,12 +629,12 @@ abstract class Mapper
 
     protected function getEntityCacheKeyByUniqueVals( array $values )
     {
-        $key = $this->entityClassName . CacheProvider::KEY_DELIMITER;
+        $key = $this->entityClassName . CacheStrategy::KEY_DELIMITER;
         foreach ($values as $item) {
             if(is_string($item)) {
                 $item = mb_strtolower($item);
             }
-            $key .= CacheProvider::KEY_DELIMITER . $item;
+            $key .= CacheStrategy::KEY_DELIMITER . $item;
         }
         return $key;
     }
@@ -668,10 +668,10 @@ abstract class Mapper
     {
         $cacheKey = $this->aggregateCachePrefix;
         if( $prefix !== '' ) {
-            $cacheKey .= $prefix . CacheProvider::KEY_DELIMITER;
+            $cacheKey .= $prefix . CacheStrategy::KEY_DELIMITER;
         }
         if( null != $entity ) {
-            $cacheKey .= get_class($entity) . CacheProvider::KEY_DELIMITER . $entity->getId();
+            $cacheKey .= get_class($entity) . CacheStrategy::KEY_DELIMITER . $entity->getId();
         }
         return $cacheKey;
     }
@@ -685,7 +685,7 @@ abstract class Mapper
      */
     public function getAggregateCacheKeyByParentAndChildEntity(Entity $parent, Entity $child, $prefix = '')
     {
-        $cacheKey = $this->getAggregateCacheKeyByParentEntity($parent,$child->getId()).CacheProvider::KEY_DELIMITER.$prefix;
+        $cacheKey = $this->getAggregateCacheKeyByParentEntity($parent,$child->getId()).CacheStrategy::KEY_DELIMITER.$prefix;
         return $cacheKey;
     }
 
@@ -699,7 +699,7 @@ abstract class Mapper
     {
         $cacheKey = '';
         foreach($entityList as $entity){
-            $cacheKey.= $this->getAggregateCacheKeyByParentEntity($entity).CacheProvider::KEY_DELIMITER;
+            $cacheKey.= $this->getAggregateCacheKeyByParentEntity($entity).CacheStrategy::KEY_DELIMITER;
         }
         return $cacheKey.$prefix;
     }
@@ -714,7 +714,7 @@ abstract class Mapper
         //$params[self::SQL_SELECT_TYPE] = self::SQL_SELECT_ALL;
         $data = $this->fetchArrayFromDB($params);
         if (count($data) > 1) {
-            throw new Exception('More than 1 row in result set');
+            throw new BaseException('More than 1 row in result set');
         } elseif (count($data) == 0) {
             return null;
         }
@@ -835,16 +835,16 @@ abstract class Mapper
      * Contains loading of fields, that initialize after object initialization (lazy load).
      * Must be overriden in child Classes
      * In this abstract class only the simplest case is implemented only
-     *
+
      * @param Business $business
      * @param string $fieldName
      * @return mixed
-     * @throws Exception
+     * @throws BaseException
      */
     public function lazyload($business, $fieldName)
     {
         if (false === $business instanceof Business) {
-            throw new Exception("Object `$business` is not instance of `Business` class");
+            throw new BaseException("Object `$business` is not instance of `Business` class");
         }
 
         if ($business instanceof Entity) {
@@ -880,12 +880,12 @@ abstract class Mapper
 
                     return $fieldValue !== null ? $mapper->getEntityById($fieldValue) : null;
                 } else {
-                   throw new Exception("{$mapperClassName} not found");
+                   throw new BaseException("{$mapperClassName} not found");
                 }
             }
         }
 
-        throw new Exception("Can't lazy load field {$fieldName} in mapper {$this}");
+        throw new BaseException("Can't lazy load field {$fieldName} in mapper {$this}");
     }
 
 

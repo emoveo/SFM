@@ -1,11 +1,16 @@
 <?php
 namespace SFM;
 
+use SFM\Database\Config;
 use SFM\Database\DatabaseProvider;
-use SFM\Cache\CacheProvider;
+use SFM\Cache\CacheStrategy;
 use SFM\Cache\Session;
 use SFM\IdentityMap\IdentityMap;
-use SFM\Transaction\Transaction;
+use SFM\IdentityMap\IdentityMapStorage;
+use SFM\Transaction\TransactionAggregator;
+use SFM\Value\ValueStorage;
+use Zend\Db\Adapter\Adapter;
+use Zend\Db\Adapter\Exception\ExceptionInterface;
 
 class Manager extends \Pimple
 {
@@ -31,16 +36,44 @@ class Manager extends \Pimple
      */
     public function reset()
     {
-        $this['db'] = $this->share(function () {
-            $db = new DatabaseProvider();
-            $db->init($this['db_config']);
-            $db->connect();
+        $this['adapter'] = $this->share(function() {
 
-            return $db;
+                if (!$this->getConfigDb() instanceof Config) {
+                    throw new BaseException("DatabaseProvider is not configured");
+                }
+
+                try {
+                    $adapter = new Adapter(array(
+                        'driver' => $this->getConfigDb()->getDriver(),
+                        'database' => $this->getConfigDb()->getDb(),
+                        'username' => $this->getConfigDb()->getUser(),
+                        'password' => $this->getConfigDb()->getPass(),
+                        'hostname' => $this->getConfigDb()->getHost()
+                    ));
+
+                    if (is_array($this->getConfigDb()->getInitialQueries())) {
+                        foreach ($this->getConfigDb()->getInitialQueries() as $query) {
+                            $adapter->query($query ,array());
+                        }
+                    }
+
+                    return $adapter;
+
+                } catch (ExceptionInterface $e) {
+                    throw new BaseException('Error while connecting to db', 0, $e);
+                }
+        });
+
+        $this['value_storage'] = $this->share(function () {
+            return new ValueStorage($this->getCache());
+        });
+
+        $this['db'] = $this->share(function () {
+            return new DatabaseProvider($this['adapter']);
         });
 
         $this['cacheMemory'] = $this->share(function () {
-            $cache = new CacheProvider();
+            $cache = new CacheStrategy();
             $cache->init($this['cache_config']);
             $cache->connect();
 
@@ -52,16 +85,24 @@ class Manager extends \Pimple
         });
 
         $this['identityMap'] = $this->share(function () {
-            return new IdentityMap();
+            return new IdentityMap(new IdentityMapStorage(), new IdentityMapStorage(), new IdentityMapStorage());
         });
 
         $this['transaction'] = $this->share(function () {
-            $transaction = new Transaction();
-            $transaction->addTransactionEngine($this->getDb());
-            $transaction->addTransactionEngine($this->getCache());
-            $transaction->addTransactionEngine($this->getIdentityMap());
+            $transaction = new TransactionAggregator();
+            foreach ($this['transaction_engines'] as $engine) {
+                $transaction->registerTransactionEngine($engine);
+            }
 
             return $transaction;
+        });
+
+        $this['transaction_engines'] = $this->share(function () {
+            return [
+                $this->getDb(),
+                $this->getCache()->getAdapter(),
+                $this->getIdentityMap()
+            ];
         });
 
         $this['repository'] = $this->share(function () {
@@ -88,7 +129,15 @@ class Manager extends \Pimple
     }
 
     /**
-     * @return CacheProvider
+     * @return Config
+     */
+    public function getConfigDb()
+    {
+        return $this['db_config'];
+    }
+
+    /**
+     * @return CacheStrategy
      */
     public function getCache()
     {
@@ -112,10 +161,18 @@ class Manager extends \Pimple
     }
 
     /**
-     * @return Transaction
+     * @return TransactionAggregator
      */
     public function getTransaction()
     {
         return $this['transaction'];
+    }
+
+    /**
+     * @return ValueStorage
+     */
+    public function getValueStorage()
+    {
+        return $this['value_storage'];
     }
 }

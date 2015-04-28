@@ -1,6 +1,10 @@
 <?php
 namespace SFM\Cache\Driver;
 
+/**
+ * Class DummyDriver
+ * @package SFM\Cache\Driver
+ */
 class DummyDriver implements DriverInterface
 {
     /**
@@ -15,10 +19,9 @@ class DummyDriver implements DriverInterface
     }
 
     /**
-     * @param int $delay
      * @return bool
      */
-    public function flush($delay = 0)
+    public function flush()
     {
         return true;
     }
@@ -29,7 +32,7 @@ class DummyDriver implements DriverInterface
      */
     public function get($key)
     {
-        return false;
+        return null;
     }
 
     /**
@@ -38,7 +41,7 @@ class DummyDriver implements DriverInterface
      */
     public function getMulti(array $keys)
     {
-        return false;
+        return [];
     }
 
     /**
@@ -64,19 +67,10 @@ class DummyDriver implements DriverInterface
 
     /**
      * @param string $key
-     * @param int $time
      * @return bool
      */
-    public function delete($key, $time = 0)
+    public function delete($key)
     {
         return true;
-    }
-
-    /**
-     * @return int
-     */
-    public function getResultCode()
-    {
-        return 0;
     }
 }

@@ -1,6 +1,10 @@
 <?php
 namespace SFM\Cache\Driver;
 
+/**
+ * Interface DriverInterface
+ * @package SFM\Cache\Driver
+ */
 interface DriverInterface
 {
     /**
@@ -12,10 +16,9 @@ interface DriverInterface
     public function addServer($host, $port, $weight = 0);
 
     /**
-     * @param int $delay
      * @return bool
      */
-    public function flush($delay = 0);
+    public function flush();
 
     /**
      * @param string|$key
@@ -25,7 +28,7 @@ interface DriverInterface
 
     /**
      * @param array $keys
-     * @return bool
+     * @return array
      */
     public function getMulti(array $keys);
 
@@ -46,13 +49,7 @@ interface DriverInterface
 
     /**
      * @param string $key
-     * @param int $time
      * @return bool
      */
-    public function delete($key, $time = 0);
-
-    /**
-     * @return int
-     */
-    public function getResultCode();
+    public function delete($key);
 }

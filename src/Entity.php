@@ -2,12 +2,11 @@
 namespace SFM;
 
 use Zend\Db\Adapter\Exception\ExceptionInterface;
-use SFM\Transaction\RestorableInterface;
 
 /**
  * Abstract class for single Business object
  */
-abstract class Entity extends Business implements RestorableInterface
+abstract class Entity extends Business
 {
     /**
      * Prototype array - contains information about Business object (actually, it is retreived from DB with help of any Data Mapper)
@@ -244,27 +243,5 @@ abstract class Entity extends Business implements RestorableInterface
     public function toArray()
     {
         return array('entity' => $this);
-    }
-
-    public function getObjectState()
-    {
-        return $this->objectState;
-    }
-
-    public function restoreObjectState($proto)
-    {
-        $this->proto = $proto;
-    }
-
-    public function getObjectIdentifier()
-    {
-        $identifier = $this->getCacheKey() ? $this->getCacheKey() : spl_object_hash($this);
-        
-        return $identifier;
-    }
-
-    public function __toString()
-    {
-        return $this->getObjectIdentifier();
     }
 }

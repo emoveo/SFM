@@ -1,13 +1,23 @@
 <?php
 namespace SFM\Cache\Driver;
 
+/**
+ * Class MemcachedDriver
+ * @package SFM\Cache\Driver
+ */
 class MemcachedDriver implements DriverInterface
 {
+    const DRIVER = 'memcached';
+
+    /** @var \Memcached */
     protected $memcached;
 
-    public function __construct()
+    /**
+     * @param \Memcached $memcached
+     */
+    public function __construct($memcached)
     {
-        $this->memcached = new \Memcached();
+        $this->memcached = $memcached;
     }
 
     /**
@@ -22,12 +32,11 @@ class MemcachedDriver implements DriverInterface
     }
 
     /**
-     * @param int $delay
      * @return bool
      */
-    public function flush($delay = 0)
+    public function flush()
     {
-        return $this->memcached->flush($delay);
+        return $this->memcached->flush();
     }
 
     /**
@@ -36,7 +45,8 @@ class MemcachedDriver implements DriverInterface
      */
     public function get($key)
     {
-        return $this->memcached->get($key);
+        $value = $this->memcached->get($key);
+        return $value === false ? null : $value;
     }
 
     /**
@@ -45,7 +55,8 @@ class MemcachedDriver implements DriverInterface
      */
     public function getMulti(array $keys)
     {
-        return $this->memcached->getMulti($keys);
+        $values = $this->memcached->getMulti($keys);
+        return false === $values ? [] : $values;
     }
 
     /**
@@ -71,19 +82,10 @@ class MemcachedDriver implements DriverInterface
 
     /**
      * @param string $key
-     * @param int $time
      * @return bool
      */
-    public function delete($key, $time = 0)
+    public function delete($key)
     {
-        return $this->memcached->delete($key, $time);
-    }
-
-    /**
-     * @return int
-     */
-    public function getResultCode()
-    {
-        return $this->memcached->getResultCode();
+        return $this->memcached->delete($key);
     }
 }

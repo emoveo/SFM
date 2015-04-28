@@ -1,13 +1,11 @@
 <?php
 namespace SFM;
 
-use \SFM\Transaction\RestorableInterface;
-
 /**
  * Abstract class, ANY business object (either Entity or Aggregate)
  * 
  */
-abstract class Business implements RestorableInterface
+abstract class Business
 {
     /**
      * Mapper which created this business object

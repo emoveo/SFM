@@ -1,12 +1,10 @@
 <?php
 namespace SFM\Cache;
 
+use SFM\Cache\Driver\DummyDriver;
+use SFM\Cache\Driver\MemcachedDriver;
 use SFM\Cache\Generator\Md5Generator;
 use SFM\Cache\Packer\TagPacker;
-use SFM\Cache\Transaction\TransactionCache;
-use SFM\Monitor\MonitorableInterface;
-use SFM\Transaction\TransactionEngine;
-use SFM\Monitor\MonitorInterface;
 use SFM\Cache\Generator\GeneratorInterface;
 use SFM\Cache\Packer\PackerInterface;
 use SFM\Business;
@@ -16,7 +14,7 @@ use SFM\Entity;
 /**
  *  Class for work with daemons that use memcache protocol. Implements tags system for cache control
  */
-class CacheProvider implements MonitorableInterface, TransactionEngine
+class CacheStrategy implements Value\ValueStorageStrategyInterface
 {
     const KEY_DELIMITER = '@';
 
@@ -35,16 +33,6 @@ class CacheProvider implements MonitorableInterface, TransactionEngine
     protected $config;
 
     /**
-     * @var TransactionCache
-     */
-    protected $transactionCache;
-
-    /**
-     * @var MonitorInterface
-     */
-    protected $monitor;
-
-    /**
      * @var GeneratorInterface
      */
     protected $generator;
@@ -61,43 +49,35 @@ class CacheProvider implements MonitorableInterface, TransactionEngine
     public function init(Config $config)
     {
         $this->config = $config;
-        $this->generator = new Md5Generator($config);
+        $this->generator = new Md5Generator($config->getPrefix());
 
         return $this;
     }
 
     /**
-     * @throws CacheException
+     * @throws CacheBaseException
      */
     public function connect()
     {
         if (is_null($this->config)) {
-            throw new CacheException("SFM/Cache is not configured");
+            throw new CacheBaseException("SFM/Cache is not configured");
         }
 
-        $driver = $this->config->isDisabled() ? Adapter::DUMMY : $this->config->getDriver();
+        $driver = !$this->config->isDisabled() ? $this->config->getDriver() : null;
 
-        $this->adapter = new Adapter($driver, $this->transactionCache);
-        $this->adapter->setMonitor($this->monitor);
+        if ($driver == MemcachedDriver::DRIVER) {
+            $driver = new MemcachedDriver(new \Memcached());
+        } else {
+            $driver = new DummyDriver();
+        }
+
+        $this->adapter = new Adapter($driver);
 
         if (false === $this->adapter->addServer($this->config->getHost(), $this->config->getPort(), true)) {
-            throw new CacheException(sprintf("SFM/Cache can't connect to server %s:%s", $this->config->getHost(), $this->config->getPort()));
+            throw new CacheBaseException(sprintf("SFM/Cache can't connect to server %s:%s", $this->config->getHost(), $this->config->getPort()));
         }
 
         $this->packer = new TagPacker($this->adapter, $this->generator);
-    }
-
-    public function __construct()
-    {
-        $this->transactionCache = new TransactionCache($this);
-    }
-
-    /**
-     * @param MonitorInterface $monitor
-     */
-    public function setMonitor(MonitorInterface $monitor)
-    {
-        $this->monitor = $monitor;
     }
 
     /**
@@ -131,7 +111,10 @@ class CacheProvider implements MonitorableInterface, TransactionEngine
      */
     public function getMulti(array $rawKeys)
     {
-        $keys = $this->generator->generate($rawKeys);
+        $keys = [];
+        foreach ($rawKeys as $rawKey) {
+            $keys[] = $this->generator->generate($rawKey);
+        }
         $rawValues = $this->adapter->getMulti($keys);
 
         $result = $this->packer->unpack($rawValues);
@@ -144,12 +127,8 @@ class CacheProvider implements MonitorableInterface, TransactionEngine
      */
     public function set(Business $business)
     {
-        if ($this->transactionCache->isTransaction()) {
-            $this->transactionCache->logBusiness($business);
-        } else {
-            $key = $this->generator->generate($business->getCacheKey());
-            $this->adapter->set($key, $this->packer->pack($business), $business->getExpires());
-        }
+        $key = $this->generator->generate($business->getCacheKey());
+        $this->adapter->set($key, $this->packer->pack($business), $business->getExpires());
     }
 
     /**
@@ -160,7 +139,6 @@ class CacheProvider implements MonitorableInterface, TransactionEngine
     public function setValue($key, Value $value, $expiration = 0)
     {
         $this->setRaw($key, $value->get(), $expiration);
-        $this->transactionCache->logResetable($value);
     }
 
     /**
@@ -206,19 +184,14 @@ class CacheProvider implements MonitorableInterface, TransactionEngine
      */
     public function setMulti(array $items, $expiration = 0)
     {
-        if ($this->transactionCache->isTransaction()) {
-            $this->transactionCache->logMulti($items, $expiration);
-        } else {
+        $arr = array();
+        /** @var $businessObj Business */
+        foreach ($items as $businessObj) {
+            $cacheKey = $this->generator->generate($businessObj->getCacheKey());
+            $arr[$cacheKey] = $this->packer->pack($businessObj);
+       }
 
-            $arr = array();
-            /** @var $businessObj Business */
-            foreach ($items as $businessObj) {
-                $cacheKey = $this->generator->generate($businessObj->getCacheKey());
-                $arr[$cacheKey] = $this->packer->pack($businessObj);
-           }
-
-           $this->adapter->setMulti($arr, $expiration);
-        }
+       $this->adapter->setMulti($arr, $expiration);
     }
 
     /**
@@ -230,12 +203,7 @@ class CacheProvider implements MonitorableInterface, TransactionEngine
     public function delete($rawKey)
     {
         $key = $this->generator->generate($rawKey);
-        if ($this->transactionCache->isTransaction()) {
-            $this->transactionCache->logDeleted($key);
-            $result = true;
-        } else {
-            $result = $this->adapter->delete($key);
-        }
+        $result = $this->adapter->delete($key);
 
         return $result;
     }
@@ -259,32 +227,28 @@ class CacheProvider implements MonitorableInterface, TransactionEngine
         $this->packer->resetTags($entity->getCacheTags());
     }
 
-    public function beginTransaction()
-    {
-        $this->transactionCache->beginTransaction();
-    }
-
     /**
+     * @deprecated
      * @return bool
      */
     public function isTransaction()
     {
-        return $this->transactionCache->isTransaction();
+        return $this->adapter->isTransaction();
     }
 
     /**
-     * @return bool
+     * @deprecated
      */
     public function commitTransaction()
     {
-        return $this->transactionCache->commitTransaction();
+        $this->adapter->commitTransaction();
     }
 
     /**
-     * @return bool
+     * @deprecated
      */
     public function rollbackTransaction()
     {
-        return $this->transactionCache->rollbackTransaction();
+        $this->adapter->rollbackTransaction();
     }
 }

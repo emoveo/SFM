@@ -1,7 +1,7 @@
 <?php
 namespace SFM\Cache\Packer;
 
-use SFM\Cache\CacheProvider;
+use SFM\Cache\CacheStrategy;
 use SFM\Cache\Adapter;
 use SFM\Cache\Generator\GeneratorInterface;
 use SFM\Business;
@@ -29,9 +29,9 @@ class TagPacker
     {
         if ($object instanceof Business) {
             $data = array(
-                CacheProvider::KEY_VALUE => serialize($object),
-                CacheProvider::KEY_TAGS  => $this->getTags($object->getCacheTags()),
-                CacheProvider::KEY_EXPIRES  => $object->getExpires(),
+                CacheStrategy::KEY_VALUE => serialize($object),
+                CacheStrategy::KEY_TAGS  => $this->getTags($object->getCacheTags()),
+                CacheStrategy::KEY_EXPIRES  => $object->getExpires(),
             );
             $packed = $this->pack($data);
         } else {
@@ -60,12 +60,12 @@ class TagPacker
             if (false === is_array($data)) {
                 $result = null;
             } else {
-                $oldTagValues = (array) $data[CacheProvider::KEY_TAGS];
+                $oldTagValues = (array) $data[CacheStrategy::KEY_TAGS];
 
                 $newTagValues = $this->getTags(array_keys($oldTagValues));
                 //expiration objects should expire without tags
-                if ($oldTagValues == $newTagValues || $data[CacheProvider::KEY_EXPIRES]) {
-                    $result = unserialize($data[CacheProvider::KEY_VALUE]);
+                if ($oldTagValues == $newTagValues || $data[CacheStrategy::KEY_EXPIRES]) {
+                    $result = unserialize($data[CacheStrategy::KEY_VALUE]);
                 } else {
                     $result = null;
                 }

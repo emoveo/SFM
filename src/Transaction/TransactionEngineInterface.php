@@ -4,7 +4,7 @@ namespace SFM\Transaction;
 /**
  * Data engine with transaction feature
  */
-interface TransactionEngine
+interface TransactionEngineInterface
 {
     public function beginTransaction();
 

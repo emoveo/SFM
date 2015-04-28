@@ -1,9 +1,13 @@
 <?php
 namespace SFM\Cache;
 
-use \SFM\Exception;
+use \SFM\BaseException;
 
-class CacheException extends Exception
+/**
+ * Class CacheBaseException
+ * @package SFM\Cache
+ */
+class CacheBaseException extends BaseException
 {
 
 }

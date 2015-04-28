@@ -2,70 +2,33 @@
 namespace SFM\Cache;
 
 use SFM\Cache\Driver\DriverInterface;
-use SFM\Cache\Driver\DummyDriver;
-use SFM\Cache\Driver\MemcachedDriver;
-use SFM\Cache\Transaction\TransactionCache;
-use SFM\Monitor\MonitorInterface;
+use SFM\Transaction\TransactionEngineInterface;
+use SFM\Transaction\TransactionException;
 
-class Adapter implements DriverInterface
+/**
+ * Class Adapter
+ * @package SFM\Cache
+ */
+class Adapter implements DriverInterface, TransactionEngineInterface
 {
-    const DUMMY = 1;
-    const MEMCACHED = 2;
-
-    const FORCE_TIMEOUT = 1;
-
     /** @var DriverInterface */
-    protected $driver;
+    public $driver;
 
-    /** @var MonitorInterface */
-    protected $monitor;
+    /** @var bool */
+    protected $isTransaction = false;
 
-    /**
-     * @param string $driver
-     * @param TransactionCache $transactionCache
-     */
-    public function __construct($driver, TransactionCache $transactionCache)
-    {
-        $this->driver = $this->createDriver($driver);
-        $this->transactionCache = $transactionCache;
-    }
+    /** @var string[] */
+    protected $toAdd = [];
+
+    /** @var string[] */
+    protected $toRemove = [];
 
     /**
-     * @param MonitorInterface $monitor
+     * @param DriverInterface $driver
      */
-    public function setMonitor(MonitorInterface $monitor = null)
+    public function __construct(DriverInterface $driver)
     {
-        $this->monitor = $monitor;
-    }
-
-    /**
-     * @param string $driver
-     * @return \SFM\Cache\Driver\DriverInterface
-     */
-    protected function createDriver($driver)
-    {
-        $engine = null;
-        switch ($driver) {
-            case Adapter::MEMCACHED:
-                $engine = new MemcachedDriver();
-                break;
-            default:
-                $engine = new DummyDriver();
-                break;
-        }
-
-        return $engine;
-    }
-
-    /**
-     * @param $time
-     */
-    protected function checkCacheIsAlive($time)
-    {
-        // TODO: Rewrite
-        if (microtime(true) - $time > Adapter::FORCE_TIMEOUT) {
-            $this->driver = $this->createDriver(Adapter::DUMMY);
-        }
+        $this->driver = $driver;
     }
 
     /**
@@ -73,29 +36,28 @@ class Adapter implements DriverInterface
      * @param string $port
      * @param int $weight
      * @return bool
+     * @throws TransactionException
      */
     public function addServer($host, $port, $weight = 0)
     {
+        if ($this->isTransaction) {
+            throw new TransactionException("Can't `addServer` while in transaction");
+        }
+
         return $this->driver->addServer($host, $port, $weight);
     }
 
     /**
-     * @param int $delay
      * @return bool
+     * @throws TransactionException
      */
-    public function flush($delay = 0)
+    public function flush()
     {
-        if ($this->monitor !== null) {
-            $timer = $this->monitor->createTimer(array('db' => get_class($this), 'operation' => 'flush'));
+        if ($this->isTransaction) {
+            throw new TransactionException("Can't `flush` while in transaction");
         }
 
-        $time = microtime(true);
-        $result = $this->driver->flush($delay);
-        $this->checkCacheIsAlive($time);
-
-        if (isset($timer)) {
-            $timer->stop();
-        }
+        $result = $this->driver->flush();
 
         return $result;
     }
@@ -106,25 +68,15 @@ class Adapter implements DriverInterface
      */
     public function get($key)
     {
-        if ($this->monitor !== null) {
-            $timer = $this->monitor->createTimer(array('db' => get_class($this), 'operation' => 'get'));
-        }
-
-        $time = microtime(true);
-
         $value = null;
-        if ($this->transactionCache->isTransaction()) {
-            $value = $this->transactionCache->getRaw($key);
+        if ($this->isTransaction) {
+            if (isset($this->toAdd[$key])) {
+                $value = $this->toAdd[$key];
+            }
         }
 
-        if (empty($value)) {
+        if (empty($value) && !isset($this->toRemove[$key])) {
             $value = $this->driver->get($key);
-        }
-
-        $this->checkCacheIsAlive($time);
-
-        if (isset($timer)) {
-            $timer->stop();
         }
 
         return $value;
@@ -136,30 +88,20 @@ class Adapter implements DriverInterface
      */
     public function getMulti(array $keys)
     {
-        $time = microtime(true);
-
-        if ($this->monitor !== null) {
-            $timer = $this->monitor->createTimer(array('db' => get_class($this), 'operation' => 'getMulti'));
-        }
-
         $values = array();
-        if ($this->transactionCache->isTransaction()) {
-
-            $values = array();
+        if ($this->isTransaction) {
             foreach ($keys as $key) {
-                $values[$key] = $this->transactionCache->getRaw($key);
+                if (isset($this->toAdd[$key])) {
+                    $values[$key] = $this->toAdd[$key];
+                }
             }
         }
 
-        if (empty($values)) {
-            $values = $this->driver->getMulti($keys);
-        }
+        // remove from query keys belong to deleted in transaction values
+        $keysFromCache = array_merge($keys);
+        $keysFromCache = array_diff($keysFromCache, array_keys($this->toRemove));
 
-        $this->checkCacheIsAlive($time);
-
-        if (isset($timer)) {
-            $timer->stop();
-        }
+        $values = array_merge($this->driver->getMulti($keysFromCache), $values);
 
         return $values;
     }
@@ -171,22 +113,16 @@ class Adapter implements DriverInterface
      */
     public function setMulti(array $items, $expiration = null)
     {
-        if ($this->monitor !== null) {
-            $timer = $this->monitor->createTimer(array('db' => get_class($this), 'operation' => 'setMulti'));
-        }
-
-        $time = microtime(true);
-
-        if ($this->transactionCache->isTransaction()) {
-            $result = $this->transactionCache->logRawMulti($items, $expiration);
+        if ($this->isTransaction) {
+            foreach ($items as $key => $value) {
+                if (isset($this->toRemove[$key])) {
+                    unset($this->toRemove[$key]);
+                }
+                $this->toAdd[$key] = $value;
+            }
+            $result = true;
         } else {
             $result = $this->driver->setMulti($items, $expiration);
-        }
-
-        $this->checkCacheIsAlive($time);
-
-        if (isset($timer)) {
-            $timer->stop();
         }
 
         return $result;
@@ -200,21 +136,14 @@ class Adapter implements DriverInterface
      */
     public function set($key, $value, $expiration = null)
     {
-        if ($this->monitor !== null) {
-            $timer = $this->monitor->createTimer(array('db' => get_class($this->driver), 'operation' => 'set'));
-        }
-
-        $time = microtime(true);
-        if ($this->transactionCache->isTransaction()) {
-            $result = $this->transactionCache->logRaw($key, $value, $expiration);
+        if ($this->isTransaction) {
+            $this->toAdd[$key] = $value;
+            if (isset($this->toRemove[$key])) {
+                unset($this->toRemove[$key]);
+            }
+            $result = true;
         } else {
             $result = $this->driver->set($key, $value, $expiration);
-        }
-
-        $this->checkCacheIsAlive($time);
-
-        if (isset($timer)) {
-            $timer->stop();
         }
 
         return $result;
@@ -227,31 +156,65 @@ class Adapter implements DriverInterface
      */
     public function delete($key, $time = 0)
     {
-        if ($this->monitor !== null) {
-            $timer = $this->monitor->createTimer(array('db' => get_class($this), 'operation' => 'delete'));
-        }
-
-        $time = microtime(true);
-        if ($this->transactionCache->isTransaction()) {
-            $result = $this->transactionCache->logDeleted($key);
+        if ($this->isTransaction) {
+            if (isset($this->toAdd[$key])) {
+                unset($this->toAdd[$key]);
+            }
+            $this->toRemove[$key] = $key;
+            $result = true;
         } else {
             $result = $this->driver->delete($key);
-            $this->checkCacheIsAlive($time);
-        }
-
-        if (isset($timer)) {
-            $timer->stop();
         }
 
         return $result;
     }
 
-    /**
-     * @return int
-     */
-    public function getResultCode()
+    public function beginTransaction()
     {
-        return $this->driver->getResultCode();
+        if ($this->isTransaction === true) {
+            throw new TransactionException("Can't begin transaction while another one is running");
+        }
+
+        $this->isTransaction = true;
     }
 
+    public function commitTransaction()
+    {
+        if ($this->isTransaction === false) {
+            throw new TransactionException("Can't commit transaction while no one is running");
+        }
+
+        $this->isTransaction = false;
+
+        foreach ($this->toAdd as $key => $value) {
+            $this->driver->set($key, $value);
+        }
+
+        foreach ($this->toRemove as $key => $value) {
+            $this->driver->delete($key);
+        }
+
+        $this->toAdd = [];
+        $this->toRemove = [];
+    }
+
+    public function rollbackTransaction()
+    {
+        if ($this->isTransaction === false) {
+            throw new TransactionException("Can't rollback transaction while no one is running");
+        }
+
+        $this->isTransaction = false;
+
+        $this->toAdd = [];
+        $this->toRemove = [];
+    }
+
+    /**
+     * @return bool
+     */
+    public function isTransaction()
+    {
+        return $this->isTransaction;
+    }
 }

@@ -1,85 +1,33 @@
 <?php
 namespace SFM\Database;
 
+use SFM\Transaction\TransactionException;
 use Zend\Db\Adapter\Adapter;
+use Zend\Db\Adapter\AdapterInterface;
 use Zend\Db\ResultSet\ResultSet;
 use Zend\Db\Adapter\Exception\ExceptionInterface;
-use SFM\Transaction\TransactionEngine;
-use SFM\Monitor\MonitorableInterface;
-use SFM\Monitor\MonitorInterface;
-use SFM\Exception;
+use SFM\Transaction\TransactionEngineInterface;
+use SFM\BaseException;
 
-class DatabaseProvider implements TransactionEngine, MonitorableInterface
+class DatabaseProvider implements TransactionEngineInterface
 {
     /**
      * @var Adapter
      */
-    protected $db = null;
+    protected $adapter = null;
     
     /**
-     * Current transaction level
-     * @var integer
+     * Current transaction status
+     * @var bool
      */
-    protected $transactionLevel = 0;
+    protected $isTransactionActive = false;
 
     /**
-     * @var Config
+     * @param AdapterInterface $adapter
      */
-    protected $config = null;
-
-    /**
-     * @var MonitorInterface
-     */
-    protected $monitor;
-
-    /**
-     * @param MonitorInterface $monitor
-     */
-    public function setMonitor(MonitorInterface $monitor)
+    public function __construct(AdapterInterface $adapter)
     {
-        $this->monitor = $monitor;
-    }
-
-    /**
-     * Creates a new DB connection object and connect to the database
-     * @throws Exception
-     */
-    public function connect()
-    {
-        if (is_null($this->config)) {
-            throw new Exception("DatabaseProvider is not configured");
-        }
-
-        try {
-            $this->db = new Adapter(array(
-                'driver' => $this->config->getDriver(),
-                'database' => $this->config->getDb(),
-                'username' => $this->config->getUser(),
-                'password' => $this->config->getPass(),
-                'hostname' => $this->config->getHost()
-            ));
-
-            if (is_array($this->config->getInitialQueries())) {
-                foreach ($this->config->getInitialQueries() as $query) {
-                    $this->db->query($query ,array());
-                }
-            }
-            
-        } catch (ExceptionInterface $e) {
-            throw new Exception('Error while connecting to db', 0, $e);
-        }
-
-    }
-
-    /**
-     * @param Config $config
-     * @return $this
-     */
-    public function init(Config $config)
-    {
-        $this->config = $config;
-
-        return $this;
+        $this->adapter = $adapter;
     }
     
     /**
@@ -87,7 +35,7 @@ class DatabaseProvider implements TransactionEngine, MonitorableInterface
      */
     public function getAdapter()
     {
-        return $this->db;
+        return $this->adapter;
     }
 
     /**
@@ -95,7 +43,7 @@ class DatabaseProvider implements TransactionEngine, MonitorableInterface
      */
     public function getQuoteSymbol()
     {
-        return $this->db->getPlatform()->getQuoteIdentifierSymbol();
+        return $this->adapter->getPlatform()->getQuoteIdentifierSymbol();
     }
 
     /**
@@ -104,7 +52,7 @@ class DatabaseProvider implements TransactionEngine, MonitorableInterface
      */
     public function quoteIdentifier($identifier)
     {
-        return $this->db->getPlatform()->quoteIdentifier($identifier);
+        return $this->adapter->getPlatform()->quoteIdentifier($identifier);
     }
 
     /**
@@ -116,10 +64,6 @@ class DatabaseProvider implements TransactionEngine, MonitorableInterface
      */
     public function fetchAll($sql, array $vars=array())
     {
-        if ($this->monitor !== null) {
-            $timer = $this->monitor->createTimer(array('db' => get_class($this), 'operation' => 'fetchAll'));
-        }
-
         /** @var ResultSet $stmt */
         $stmt = $this->query($sql, $vars);
 
@@ -127,10 +71,6 @@ class DatabaseProvider implements TransactionEngine, MonitorableInterface
         /** @var \ArrayObject $row */
         foreach ($stmt as $row) {
             $data[] = (array) $row;
-        }
-
-        if (isset($timer)) {
-            $timer->stop();
         }
 
         return $data;
@@ -145,15 +85,7 @@ class DatabaseProvider implements TransactionEngine, MonitorableInterface
      */
     public function fetchLine($sql, array $vars=array())
     {
-        if ($this->monitor !== null) {
-            $timer = $this->monitor->createTimer(array('db' => get_class($this), 'operation' => 'fetchLine'));
-        }
-
         $stmt = $this->query($sql, $vars);
-
-        if (isset($timer)) {
-            $timer->stop();
-        }
 
         $result = $stmt->current();
 
@@ -169,17 +101,10 @@ class DatabaseProvider implements TransactionEngine, MonitorableInterface
      */
     public function fetchValue($sql, array $vars=array())
     {
-        if ($this->monitor !== null) {
-            $timer = $this->monitor->createTimer(array('db' => get_class($this), 'operation' => 'fetchValue'));
-        }
-
         $stmt = $this->query($sql, $vars);
         $array = (array) $stmt->current();
         $data = array_shift($array);
 
-        if (isset($timer)) {
-            $timer->stop();
-        }
         return $data;
     }
 
@@ -192,16 +117,8 @@ class DatabaseProvider implements TransactionEngine, MonitorableInterface
      */
     public function update($sql, $vars = array())
     {
-        if ($this->monitor !== null) {
-            $timer = $this->monitor->createTimer(array('db' => get_class($this), 'operation' => 'update'));
-        }
-
         $stmt = $this->query($sql, $vars);
         $data = $stmt->count();
-
-        if (isset($timer)) {
-            $timer->stop();
-        }
 
         return $data;
     }
@@ -209,18 +126,18 @@ class DatabaseProvider implements TransactionEngine, MonitorableInterface
 
     /**
      * Prepares, binds params and executes query
-     *
+
      * @param string $sql SQL query with placeholders
      * @param array $vars Array of variables
-     * @throws Exception
+     * @throws BaseException
      * @return ResultSet
      */
     public function query($sql, $vars = array())
     {
         try {
-            $result = $this->db->query($sql, $vars);
+            $result = $this->adapter->query($sql, $vars);
         } catch (ExceptionInterface $e) {
-            throw new Exception("Query error", 0, $e);
+            throw new BaseException("Query error", 0, $e);
         }
 
         return $result;
@@ -235,18 +152,10 @@ class DatabaseProvider implements TransactionEngine, MonitorableInterface
      */
     public function insert($sql, $vars, $idFieldName = 'id', $isIdAutoincrement = true)
     {
-        if ($this->monitor !== null) {
-            $timer = $this->monitor->createTimer(array('db' => get_class($this), 'operation' => 'insert'));
-        }
-
         $this->query($sql, $vars);
 
-        if (isset($timer)) {
-            $timer->stop();
-        }
-
         if($isIdAutoincrement){
-            return $this->db->getDriver()->getLastGeneratedValue();
+            return $this->adapter->getDriver()->getLastGeneratedValue();
         } else {
             return $vars[$idFieldName];
         }
@@ -254,48 +163,27 @@ class DatabaseProvider implements TransactionEngine, MonitorableInterface
     
     public function delete($sql, $vars)
     {
-        if ($this->monitor !== null) {
-            $timer = $this->monitor->createTimer(array('db' => get_class($this), 'operation' => 'delete'));
-        }
-
         $stmt = $this->query($sql, $vars);
         $data = $stmt->count();
-
-        if (isset($timer)) {
-            $timer->stop();
-        }
 
         return $data;
     }
 
     /**
-     * @return bool
-     * @throws Exception
+     * @throws TransactionException
      */
     public function beginTransaction()
     {
-        $result = true;
-        if ($this->transactionLevel == 0) {
-
-            if ($this->monitor !== null) {
-                $timer = $this->monitor->createTimer(array('db' => get_class($this), 'operation' => 'beginTransaction'));
-            }
-            $this->transactionLevel++;
-
-            try {
-                $this->db->getDriver()->getConnection()->beginTransaction();
-            } catch (ExceptionInterface $e) {
-                throw new Exception("Transaction begin error", 0, $e);
-            }
-
-            if (isset($timer)) {
-                $timer->stop();
-            }
-        } else {
-            $result = false;
+        if ($this->isTransactionActive === true) {
+            throw new TransactionException("Can't begin transaction while another one is running");
         }
 
-        return $result;
+        try {
+            $this->adapter->getDriver()->getConnection()->beginTransaction();
+            $this->isTransactionActive = true;
+        } catch (\Exception $e) {
+            throw new TransactionException('Can`t begin transaction', 0, $e);
+        }
     }
 
     /**
@@ -303,75 +191,45 @@ class DatabaseProvider implements TransactionEngine, MonitorableInterface
      */
     public function isTransaction()
     {
-        return $this->transactionLevel > 0;
+        return $this->isTransactionActive;
     }
     
     /**
-     * @return bool
-     * @throws Exception
+     * @throws TransactionException
      */
     public function commitTransaction()
     {
-        if ($this->transactionLevel < 0) {
-            throw new Exception('Commit without begin occured');
+        if ($this->isTransactionActive === false) {
+            throw new TransactionException("Can't commit transaction while no one is running");
         }
 
-        $result = true;
-        $this->transactionLevel--;
-        if ($this->transactionLevel == 0) {
-
-            if ($this->monitor !== null) {
-                $timer = $this->monitor->createTimer(array('db' => 'sql', 'operation' => 'commitTransaction'));
-            }
-
-            try {
-                $this->db->getDriver()->getConnection()->commit();
-            } catch (ExceptionInterface $e) {
-                throw new Exception("Transaction commit error", 0, $e);
-            }
-
-            if (isset($timer)) {
-                $timer->stop();
-            }
-
-        } else {
-            $result = false;
+        try {
+            $this->adapter->getDriver()->getConnection()->commit();
+            $this->isTransactionActive = false;
+        } catch (\Exception $e) {
+            throw new TransactionException('Can`t commit transaction', 0, $e);
         }
-
-        return $result;
     }
 
     /**
-     * @return bool
-     * @throws Exception
+     * @throws TransactionException
      */
     public function rollbackTransaction()
     {
-        //only if any transaction is started and was not rollbacked
-        if($this->transactionLevel != 0) {
-            $this->transactionLevel = 0;
+        if ($this->isTransactionActive === false) {
+            throw new TransactionException("Can't rollback transaction while no one is running");
+        }
 
-            if ($this->monitor !== null) {
-                $timer = $this->monitor->createTimer(array('db' => 'sql', 'operation' => 'rollbackTransaction'));
-            }
-
-            try {
-                $this->db->getDriver()->getConnection()->rollBack();
-            } catch (ExceptionInterface $e) {
-                throw new Exception("Transaction rollback error", 0, $e);
-            }
-
-            if (isset($timer)) {
-                $timer->stop();
-            }
-            return true;
-        } else {
-            return false;
+        try {
+            $this->adapter->getDriver()->getConnection()->rollBack();
+            $this->isTransactionActive = false;
+        } catch (\Exception $e) {
+            throw new TransactionException("Can`t rollback transaction", 0, $e);
         }
     }
 
     public function setProfiler($profiler)
     {
-        $this->db->setProfiler($profiler);
+        $this->adapter->setProfiler($profiler);
     }
 }

@@ -7,16 +7,9 @@ class CriteriaScaffold extends ScaffoldAbstract
     {
         $scaffold = <<<EOD
 <?php
-class {$this->criteriaClass} extends \Criteria\AbstractCriteria
+class {$this->criteriaClass} extends \SFM\Criteria\AbstractCriteria
 {
-    /**
-     * @return {$this->queryBuilderClass}
-     */
-    public function createQueryBuilder()
-    {
-        \$builder = new {$this->queryBuilderClass}(\$this);
-        return \$builder;
-    }
+
 }
 EOD;
 

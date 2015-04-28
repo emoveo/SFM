@@ -1,6 +1,10 @@
 <?php
 namespace SFM\Cache\Generator;
 
+/**
+ * Interface GeneratorInterface
+ * @package SFM\Cache\Generator
+ */
 interface GeneratorInterface
 {
     /**

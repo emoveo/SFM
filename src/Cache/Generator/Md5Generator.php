@@ -1,36 +1,29 @@
 <?php
 namespace SFM\Cache\Generator;
 
-use SFM\Cache\Config;
-
+/**
+ * Class Md5Generator
+ * @package SFM\Cache\Generator
+ */
 class Md5Generator implements GeneratorInterface
 {
-    /** @var Config */
-    protected $config;
+    /** @var string */
+    protected $namespace;
 
     /**
-     * @param Config $config
+     * @param string $prefix
      */
-    public function __construct(Config $config)
+    public function __construct($prefix)
     {
-        $this->config = $config;
+        $this->namespace = $prefix;
     }
 
     /**
-     * @param string|string[] $keys
-     * @return string|string[]
+     * @param string $key
+     * @return string
      */
-    public function generate($keys)
+    public function generate($key)
     {
-        if (is_array($keys)) {
-            $newKeys = array();
-            foreach ($keys as $key) {
-                $newKeys[] = $this->generate($key);
-            }
-        } else {
-            $newKeys = md5($this->config->getPrefix().$keys);
-        }
-
-        return $newKeys;
+        return md5(md5($this->namespace).md5($key));
     }
 }
