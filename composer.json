@@ -10,7 +10,7 @@
     },
     "require": {
         "php": ">5.3",
-        "zendframework/zend-db": "2.2.5",
+        "zendframework/zend-db": "2.*",
         "pimple/pimple": "~1.0"
     },
     "require-dev": {
