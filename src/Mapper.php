@@ -1,7 +1,7 @@
 <?php
 namespace SFM;
 
-use \SFM\Cache\CacheStrategy;
+use SFM\Cache\CacheProvider;
 
 /**
  * Abstract class for Data Mapping
@@ -85,7 +85,7 @@ abstract class Mapper
         $this->entityClassName = str_replace('Mapper', 'Entity', $className);
         $this->aggregateClassName = str_replace('Mapper', 'Aggregate', $className);
         $this->idField = 'id';
-        $this->aggregateCachePrefix = $this->aggregateClassName . CacheStrategy::KEY_DELIMITER;
+        $this->aggregateCachePrefix = $this->aggregateClassName . CacheProvider::KEY_DELIMITER;
     }
 
     public function getTableName()
@@ -615,7 +615,7 @@ abstract class Mapper
 
     protected function getEntityCacheKeyById($id)
     {
-        return $this->entityClassName . CacheStrategy::KEY_DELIMITER . $id;
+        return $this->entityClassName . CacheProvider::KEY_DELIMITER . $id;
     }
 
     protected function getEntitiesCacheKeyByListId( array $ids)
@@ -629,12 +629,12 @@ abstract class Mapper
 
     protected function getEntityCacheKeyByUniqueVals( array $values )
     {
-        $key = $this->entityClassName . CacheStrategy::KEY_DELIMITER;
+        $key = $this->entityClassName . CacheProvider::KEY_DELIMITER;
         foreach ($values as $item) {
             if(is_string($item)) {
                 $item = mb_strtolower($item);
             }
-            $key .= CacheStrategy::KEY_DELIMITER . $item;
+            $key .= CacheProvider::KEY_DELIMITER . $item;
         }
         return $key;
     }
@@ -668,10 +668,10 @@ abstract class Mapper
     {
         $cacheKey = $this->aggregateCachePrefix;
         if( $prefix !== '' ) {
-            $cacheKey .= $prefix . CacheStrategy::KEY_DELIMITER;
+            $cacheKey .= $prefix . CacheProvider::KEY_DELIMITER;
         }
         if( null != $entity ) {
-            $cacheKey .= get_class($entity) . CacheStrategy::KEY_DELIMITER . $entity->getId();
+            $cacheKey .= get_class($entity) . CacheProvider::KEY_DELIMITER . $entity->getId();
         }
         return $cacheKey;
     }
@@ -685,7 +685,7 @@ abstract class Mapper
      */
     public function getAggregateCacheKeyByParentAndChildEntity(Entity $parent, Entity $child, $prefix = '')
     {
-        $cacheKey = $this->getAggregateCacheKeyByParentEntity($parent,$child->getId()).CacheStrategy::KEY_DELIMITER.$prefix;
+        $cacheKey = $this->getAggregateCacheKeyByParentEntity($parent,$child->getId()).CacheProvider::KEY_DELIMITER.$prefix;
         return $cacheKey;
     }
 
@@ -699,7 +699,7 @@ abstract class Mapper
     {
         $cacheKey = '';
         foreach($entityList as $entity){
-            $cacheKey.= $this->getAggregateCacheKeyByParentEntity($entity).CacheStrategy::KEY_DELIMITER;
+            $cacheKey.= $this->getAggregateCacheKeyByParentEntity($entity).CacheProvider::KEY_DELIMITER;
         }
         return $cacheKey.$prefix;
     }

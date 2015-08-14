@@ -14,7 +14,7 @@ use SFM\Entity;
 /**
  *  Class for work with daemons that use memcache protocol. Implements tags system for cache control
  */
-class CacheStrategy implements Value\ValueStorageStrategyInterface
+class CacheProvider implements Value\ValueStorageStrategyInterface
 {
     const KEY_DELIMITER = '@';
 

@@ -1,7 +1,7 @@
 <?php
 namespace SFM\Cache;
 
-class Session extends CacheStrategy
+class Session extends CacheProvider
 {
     /**
      * @param string $key

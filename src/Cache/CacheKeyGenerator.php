@@ -8,17 +8,17 @@ class CacheKeyGenerator
 {
     public function getEntityCacheKeyById($id, $className)
     {
-        return $className . CacheStrategy::KEY_DELIMITER . $id;
+        return $className . CacheProvider::KEY_DELIMITER . $id;
     }
 
     public function getEntityCacheKeyByUniqueVals(array $values, $className)
     {
-        $key = $className . CacheStrategy::KEY_DELIMITER;
+        $key = $className . CacheProvider::KEY_DELIMITER;
         foreach ($values as $item) {
             if(is_string($item)) {
                 $item = mb_strtolower($item);
             }
-            $key .= CacheStrategy::KEY_DELIMITER . $item;
+            $key .= CacheProvider::KEY_DELIMITER . $item;
         }
         return $key;
     }
@@ -69,17 +69,17 @@ class CacheKeyGenerator
     {
         $cacheKey = $aggregateCachePrefix;
         if( $prefix !== '' ) {
-            $cacheKey .= $prefix . CacheStrategy::KEY_DELIMITER;
+            $cacheKey .= $prefix . CacheProvider::KEY_DELIMITER;
         }
         if( null != $entity ) {
-            $cacheKey .= get_class($entity) . CacheStrategy::KEY_DELIMITER . $entity->getId();
+            $cacheKey .= get_class($entity) . CacheProvider::KEY_DELIMITER . $entity->getId();
         }
         return $cacheKey;
     }
 
     public function getAggregateCacheKeyByParentAndChildEntity(Entity $parent, Entity $child, $prefix = '', $aggregateCachePrefix)
     {
-        $cacheKey = $this->getAggregateCacheKeyByParentEntity($parent,$child->getId(), $aggregateCachePrefix).CacheStrategy::KEY_DELIMITER.$prefix;
+        $cacheKey = $this->getAggregateCacheKeyByParentEntity($parent,$child->getId(), $aggregateCachePrefix).CacheProvider::KEY_DELIMITER.$prefix;
         return $cacheKey;
     }
 } 

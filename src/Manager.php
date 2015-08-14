@@ -3,7 +3,7 @@ namespace SFM;
 
 use SFM\Database\Config;
 use SFM\Database\DatabaseProvider;
-use SFM\Cache\CacheStrategy;
+use SFM\Cache\CacheProvider;
 use SFM\Cache\Session;
 use SFM\IdentityMap\IdentityMap;
 use SFM\IdentityMap\IdentityMapStorage;
@@ -73,7 +73,7 @@ class Manager extends \Pimple
         });
 
         $this['cacheMemory'] = $this->share(function () {
-            $cache = new CacheStrategy();
+            $cache = new CacheProvider();
             $cache->init($this['cache_config']);
             $cache->connect();
 
@@ -137,7 +137,7 @@ class Manager extends \Pimple
     }
 
     /**
-     * @return CacheStrategy
+     * @return CacheProvider
      */
     public function getCache()
     {
