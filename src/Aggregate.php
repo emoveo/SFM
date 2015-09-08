@@ -174,18 +174,8 @@ abstract class Aggregate extends Business implements \Iterator, \Countable
         }
     }
 
-    protected function saveObjectState()
-    {
-        $this->objectState = array(
-            'loadedListEntityId' => $this->loadedListEntityId,
-            'listEntityId'       => $this->listEntityId
-        );
-    }
-
     public function push(Entity $entity)
     {
-        $this->saveObjectState();
-
         $this->entities[$entity->getId()] = $entity;
         if (!in_array($entity->getId(), $this->listEntityId)) {
             array_push($this->listEntityId, $entity->getId());
@@ -198,8 +188,6 @@ abstract class Aggregate extends Business implements \Iterator, \Countable
 
     public function unshift(Entity $entity)
     {
-        $this->saveObjectState();
-
         $this->entities[$entity->getId()] = $entity;
         if (!in_array($entity->getId(), $this->listEntityId)) {
             array_unshift($this->listEntityId, $entity->getId());
@@ -212,8 +200,6 @@ abstract class Aggregate extends Business implements \Iterator, \Countable
 
     public function remove(Entity $entity)
     {
-        $this->saveObjectState();
-
         $entityKey = array_search($entity, $this->entities);
         if ($entityKey !== false) {
             $this->splice($this->entities, $entityKey, 1);

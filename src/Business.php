@@ -46,13 +46,18 @@ abstract class Business
      * @param string $fieldName
      * @return mixed
      */
-    protected function getComputed($fieldName)
+    public function getComputed($fieldName)
     {
         if (!isset($this->computed[$fieldName])) {
             $value = $this->mapper->lazyload($this, $fieldName);
             $this->computed[$fieldName]= $value;            
         }
         return $this->computed[$fieldName];
+    }
+
+    public function deleteComputed($fieldName)
+    {
+        unset($this->computed[$fieldName]);
     }
     
     /**

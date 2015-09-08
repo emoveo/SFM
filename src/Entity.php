@@ -1,8 +1,6 @@
 <?php
 namespace SFM;
 
-use Zend\Db\Adapter\Exception\ExceptionInterface;
-
 /**
  * Abstract class for single Business object
  */
@@ -19,8 +17,6 @@ abstract class Entity extends Business
      * @var Mapper
      */
     protected $mapper;
-
-    protected $objectState;
 
     /**
      * Constructor
@@ -85,6 +81,11 @@ abstract class Entity extends Business
     {
            return $this->getInfo($fieldName);
     }
+
+    public function setProto($fieldname, $value)
+    {
+        $this->proto[$fieldname] = $value;
+    }
     
     /**
      * Return entity id
@@ -97,57 +98,13 @@ abstract class Entity extends Business
 
     /**
      * Wrapper for mapper's updateEntity method
+     * @deprecated Use mapper updateEntity() instead
      * @param array $params Fields to be updated and new values
      * @return mixed ID of updated entity in case of successful update, false - overwise
      */
     public function update(array $params = array())
     {
-        $this->objectState = $this->proto;
-
-        //@TODO rewrite without clone
-        if(empty($params))
-            return true;
-        
-        $oldEntity = clone $this;
-        foreach ($params as $key => $value) {
-            //Check that field exists
-            if (array_key_exists($key, $this->proto)) {
-                //Prevent Entity from changing its id
-                if ($key != $this->mapper->getIdField()) {
-                    $this->proto[$key] = $value;
-                }
-                
-                //if it is an some id-field...
-                if(strrpos($key,'_id') !== false) {
-                    //...and if there is a lazy-object loaded already...
-                    if (isset($this->computed[$key])) {
-                        //...kill it. Goodbye!
-                        unset($this->computed[$key]);
-                    }
-                }
-            }
-        }
-        $this->mapper->updateUniqueFields($this, $oldEntity);
         return $this->mapper->updateEntity($params, $this);
-    }
-    
-    /**
-     * Wrapper for update with transaction folding
-     * 
-     * @return bool True if update() success, false - if update failure or database exception
-     */
-    public function updateSafe(array $params)
-    {
-        $db = Manager::getInstance()->getTransaction();
-        try {
-            $db->beginTransaction();
-            $result = $this->update($params);
-            $db->commitTransaction();
-            return $result;
-        } catch(ExceptionInterface $e) {
-            $db->rollbackTransaction();
-            throw $e;
-        }
     }
     
     /**
@@ -158,25 +115,6 @@ abstract class Entity extends Business
     public function delete()
     {
         return $this->mapper->deleteEntity($this);
-    }
-    
-    /**
-     * Wrapper for delete with transaction folding
-     * 
-     * @return bool True if delete() success, false - if delete failure or database exception
-     */
-    public function deleteSafe()
-    {
-        $db = Manager::getInstance()->getTransaction();
-        try {
-            $db->beginTransaction();
-            $result = $this->delete();
-            $db->commitTransaction();
-            return $result;
-        } catch(ExceptionInterface $e) {
-            $db->rollbackTransaction();
-            throw $e;
-        }
     }
     
     public function __sleep()

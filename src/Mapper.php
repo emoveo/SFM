@@ -279,6 +279,13 @@ abstract class Mapper
      */
     public function updateEntity(array $params, Entity $entity)
     {
+        //@TODO rewrite without clone
+        if (empty($params)) {
+            return true;
+        }
+
+        $oldEntity = clone $entity;
+
         //Prevent changing id of Entity
         unset($params[$this->idField]);
 
@@ -300,6 +307,23 @@ abstract class Mapper
         if ($entity->isCacheable()) {
             $this->saveCached($entity);
         }
+
+        foreach ($params as $key => $value) {
+            //Check that field exists
+            if (array_key_exists($key, $entity->getProto())) {
+                $entity->setProto($key, $value);
+
+                //if it is an some id-field...
+                if(strrpos($key,'_id') !== false) {
+                    //...and if there is a lazy-object loaded already...
+                    if ($entity->getComputed($key) instanceof Entity) {
+                        //...kill it. Goodbye!
+                        $entity->deleteComputed($key);
+                    }
+                }
+            }
+        }
+        $this->updateUniqueFields($entity, $oldEntity);
 
         return $state;
     }
