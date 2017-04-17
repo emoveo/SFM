@@ -1,6 +1,7 @@
 <?php
 namespace SFM;
 
+use Pimple\Container;
 use SFM\Database\Config;
 use SFM\Database\DatabaseProvider;
 use SFM\Cache\CacheProvider;
@@ -12,7 +13,7 @@ use SFM\Value\ValueStorage;
 use Zend\Db\Adapter\Adapter;
 use Zend\Db\Adapter\Exception\ExceptionInterface;
 
-class Manager extends \Pimple
+class Manager extends Container
 {
     protected static $instance;
 
@@ -36,7 +37,7 @@ class Manager extends \Pimple
      */
     public function reset()
     {
-        $this['adapter'] = $this->share(function() {
+        $this['adapter'] = function() {
 
                 if (!$this->getConfigDb() instanceof Config) {
                     throw new BaseException("DatabaseProvider is not configured");
@@ -62,52 +63,52 @@ class Manager extends \Pimple
                 } catch (ExceptionInterface $e) {
                     throw new BaseException('Error while connecting to db', 0, $e);
                 }
-        });
+        };
 
-        $this['value_storage'] = $this->share(function () {
+        $this['value_storage'] = function () {
             return new ValueStorage($this->getCache());
-        });
+        };
 
-        $this['db'] = $this->share(function () {
+        $this['db'] = function () {
             return new DatabaseProvider($this['adapter']);
-        });
+        };
 
-        $this['cacheMemory'] = $this->share(function () {
+        $this['cacheMemory'] = function () {
             $cache = new CacheProvider();
             $cache->init($this['cache_config']);
             $cache->connect();
 
             return $cache;
-        });
+        };
 
-        $this['cacheSession'] = $this->share(function () {
+        $this['cacheSession'] = function () {
             return new Session();
-        });
+        };
 
-        $this['identityMap'] = $this->share(function () {
+        $this['identityMap'] = function () {
             return new IdentityMap(new IdentityMapStorage(), new IdentityMapStorage(), new IdentityMapStorage());
-        });
+        };
 
-        $this['transaction'] = $this->share(function () {
+        $this['transaction'] = function () {
             $transaction = new TransactionAggregator();
             foreach ($this['transaction_engines'] as $engine) {
                 $transaction->registerTransactionEngine($engine);
             }
 
             return $transaction;
-        });
+        };
 
-        $this['transaction_engines'] = $this->share(function () {
+        $this['transaction_engines'] = function () {
             return [
                 $this->getDb(),
                 $this->getCache()->getAdapter(),
                 $this->getIdentityMap()
             ];
-        });
+        };
 
-        $this['repository'] = $this->share(function () {
+        $this['repository'] = function () {
             return new Repository();
-        });
+        };
 
         return $this;
     }
