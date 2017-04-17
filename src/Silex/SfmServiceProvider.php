@@ -10,11 +10,11 @@ class SfmServiceProvider implements ServiceProviderInterface
 {
     public function register(Application $app)
     {
-        $app['sfm'] = $app->share(function () {
+        $app['sfm'] = function () {
             return Manager::getInstance();
-        });
+        };
 
-        $app['sfm']['db_config'] = $app['sfm']->share(function () use ($app) {
+        $app['sfm']['db_config'] = function () use ($app) {
             $sqlConfig = new Config();
             $sqlConfig->setHost($app["sfm.db"]["hostname"])
                       ->setUser($app["sfm.db"]["username"])
@@ -27,9 +27,9 @@ class SfmServiceProvider implements ServiceProviderInterface
             }
 
             return $sqlConfig;
-        });
+        };
 
-        $app['sfm']['cache_config'] = $app['sfm']->share(function () use ($app) {
+        $app['sfm']['cache_config'] = function () use ($app) {
             $configCache = new \SFM\Cache\Config();
             if (isset($app["sfm.cache"])) {
                 $configCache->setHost($app["sfm.cache"]["hostname"])
@@ -42,7 +42,7 @@ class SfmServiceProvider implements ServiceProviderInterface
             }
 
             return $configCache;
-        });
+        };
 
 
     }
