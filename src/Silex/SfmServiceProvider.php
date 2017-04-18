@@ -1,14 +1,14 @@
 <?php
 namespace SFM\Silex;
 
-use Silex\Application;
-use Silex\ServiceProviderInterface;
+use Pimple\Container;
+use Pimple\ServiceProviderInterface;
 use SFM\Database\Config;
 use SFM\Manager;
 
 class SfmServiceProvider implements ServiceProviderInterface
 {
-    public function register(Application $app)
+    public function register(Container $app)
     {
         $app['sfm'] = function () {
             return Manager::getInstance();
@@ -44,11 +44,6 @@ class SfmServiceProvider implements ServiceProviderInterface
             return $configCache;
         };
 
-
-    }
-
-    public function boot(Application $app)
-    {
 
     }
 }
