@@ -529,8 +529,9 @@ abstract class Aggregate extends Business implements \Iterator, \Countable
     /**
      * Combines several aggregates to one.
      * @param Mapper $mapper
-     * @param array of Aggregate $aggregates
-     * @param string|null $cacheKey 
+     * @param Aggregate[] $aggregates
+     * @param string|null $cacheKey
+     * @return Aggregate
      */
     public static function combine(Mapper $mapper,array $aggregates,$cacheKey = null)
     {
@@ -546,6 +547,8 @@ abstract class Aggregate extends Business implements \Iterator, \Countable
      * Returns if the entity exists in aggregate
      * @param Entity $entity
      * @param boolean $onlyLoaded If true, entity is searched only in loaded entities
+     *
+     * @return bool
      */
     public function entityExists(Entity $entity, $onlyLoaded = false)
     {

@@ -142,7 +142,7 @@ abstract class Entity extends Business
     /**
      * Return key for storing entity id value in Cache
      * 
-     * @param $uniqueKey One of the keys. It must contain only filed names
+     * @param array $uniqueKey One of the keys. It must contain only filed names
      * @return string
      */
     public function getCacheKeyByUniqueFields(array $uniqueKey)
