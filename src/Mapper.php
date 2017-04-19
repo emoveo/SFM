@@ -124,6 +124,7 @@ abstract class Mapper
      *
      * @param int $id
      * @return Entity|null
+     * @throws BaseException
      */
     public function getEntityById( $id )
     {
@@ -162,6 +163,7 @@ abstract class Mapper
      * @see getEntityById
      * @param $params
      * @return Entity|null
+     * @throws BaseException
      */
     public function getEntityByUniqueFields(array $params)
     {
@@ -291,13 +293,15 @@ abstract class Mapper
 
         //First update the DB
         $updates = array();
+        $keyCounter = 1;
         foreach ($params as $key => $value) {
-            $field = Manager::getInstance()->getDb()->quoteIdentifier($key, true);
-            $updates []= "{$field}=:{$key}";
+            $field = Manager::getInstance()->getDb()->quoteIdentifier($key);
+            $updates []= "{$field}=\${$keyCounter}";
+            $keyCounter++;
         }
 
         $params[$this->idField] = $entity->getInfo($this->idField);
-        $sql = "UPDATE ".Manager::getInstance()->getDb()->quoteIdentifier($this->tableName, true)." SET " . implode(',', $updates) . " WHERE {$this->idField}=:{$this->idField}";
+        $sql = "UPDATE ".Manager::getInstance()->getDb()->quoteIdentifier($this->tableName)." SET " . implode(',', $updates) . " WHERE {$this->idField}=\${$keyCounter}";
 
         $state = Manager::getInstance()->getDb()->update($sql, $params);
 
@@ -387,9 +391,9 @@ abstract class Mapper
         }
 
         //Then delete from DB
-        $tableName = Manager::getInstance()->getDb()->quoteIdentifier($this->tableName, true);
+        $tableName = Manager::getInstance()->getDb()->quoteIdentifier($this->tableName);
 
-        $sql = "DELETE FROM {$tableName} WHERE {$this->idField}=:{$this->idField}";
+        $sql = "DELETE FROM {$tableName} WHERE {$this->idField}=\$1";
         return Manager::getInstance()->getDb()->delete($sql, array($this->idField => $entity->getInfo($this->idField)));
     }
 
@@ -407,17 +411,20 @@ abstract class Mapper
 
         $keys = array();
         $values = array();
+        $keyCounter = 1;
         foreach ($proto as $key => $value) {
-            $keys[] = Manager::getInstance()->getDb()->quoteIdentifier($key, true);
-            $values[] = ':'.$key;
+            $keys[] = Manager::getInstance()->getDb()->quoteIdentifier($key);
+            $values[] = '$' . $keyCounter;
+            $keyCounter++;
         }
 
         $sql = "INSERT INTO "
-             . Manager::getInstance()->getDb()->quoteIdentifier($this->tableName, true)
+             . Manager::getInstance()->getDb()->quoteIdentifier($this->tableName)
              . ' (' . implode(', ', $keys) . ') '
              . 'VALUES (' . implode(', ', $values) . ')';
-        
-        return $this->getEntityById(Manager::getInstance()->getDb()->insert($sql, $proto, $this->idField, $this->isIdAutoIncrement()) );
+
+        $id = Manager::getInstance()->getDb()->insert($sql, $proto, $this->idField, $this->isIdAutoIncrement(), $this->tableName);
+        return $this->getEntityById($id);
     }
 
     /**
@@ -493,11 +500,11 @@ abstract class Mapper
     public function getAggregateByIds(array $ids = array(), $cacheKey=null, $loadEntities=false, $expiration = 0)
     {
         $aggregate = $this->getCachedAggregate($cacheKey,$loadEntities);
-        if($aggregate === null){
+        if ($aggregate === null) {
             $aggregate = $this->createAggregate( $ids, $cacheKey, $loadEntities );
             $this->saveCachedAggregate($aggregate,$loadEntities,$expiration);
-            return $aggregate;
         }
+        return $aggregate;
     }
 
     protected function getCachedAggregate($cacheKey,$loadEntities)
@@ -537,6 +544,7 @@ abstract class Mapper
      * @param string $cacheKey
      * @param integer $expiration
      * @return Aggregate
+     * @throws \Exception
      */
     public function getLoadedAggregateBySQL($sql, array $params = array(), $cacheKey=null, $expiration = 0)
     {
@@ -609,7 +617,7 @@ abstract class Mapper
             $calculated = $this->getCalculatedExpressions();
             if(!empty($calculated))
                 $sql.= ', '.implode(', ',$calculated);
-            $sql.= ' FROM '.Manager::getInstance()->getDb()->quoteIdentifier($this->tableName, true).' WHERE '. $this->getIdField() .' IN ('. implode(",",$entityId) .')';
+            $sql.= ' FROM '.Manager::getInstance()->getDb()->quoteIdentifier($this->tableName).' WHERE '. $this->getIdField() .' IN ('. implode(",",$entityId) .')';
             $data = Manager::getInstance()->getDb()->fetchAll($sql);
             
             foreach ($data as $row) {
@@ -685,7 +693,7 @@ abstract class Mapper
      * Generate default cache key name base on parent entity id and seed
      * @example usage (Entity_User $user, 'sort_by_rating') or (Entity_User $user, 'sort_by_num_posts')
      * @param Entity $entity
-     * @param $prefix Use it if you need different cache keys for same parent entity
+     * @param string $prefix Use it if you need different cache keys for same parent entity
      * @return string
      */
     public function getAggregateCacheKeyByParentEntity(Entity $entity=null, $prefix='')
@@ -704,7 +712,7 @@ abstract class Mapper
      * Generate cache key basing on parent and child entity. Aggregate is replaced by concrete child id.
      * @param Entity $parent
      * @param Entity $child
-     * @param $prefix Use it if you need different cache keys for same parent entity
+     * @param string $prefix Use it if you need different cache keys for same parent entity
      * @return string
      */
     public function getAggregateCacheKeyByParentAndChildEntity(Entity $parent, Entity $child, $prefix = '')
@@ -716,7 +724,7 @@ abstract class Mapper
     /**
      * Generate cache key basing on entity list. Aggregate is replaced by concrete child id.
      * @param Aggregate|array $entityList
-     * @param $prefix Use it if you need different cache keys for same parent entity
+     * @param string $prefix Use it if you need different cache keys for same parent entity
      * @return string
      */
     public function getAggregateCacheKeyByEntities($entityList, $prefix = '')
@@ -728,9 +736,10 @@ abstract class Mapper
         return $cacheKey.$prefix;
     }
 
-   /**
+    /**
      * @param array $params
      * @return Entity
+     * @throws BaseException
      */
     protected function getEntityFromDB( array $params )
     {
@@ -784,11 +793,13 @@ abstract class Mapper
             unset($params[self::SQL_PARAM_CONDITION]);
         }
 
+        $keyCounter = 1;
         foreach ($params as $key => $value) {
-            $conditions []= $quoteSymbol."{$key}".$quoteSymbol." = :{$key}";
+            $conditions []= $quoteSymbol."{$key}".$quoteSymbol." = \${$keyCounter}";
+            $keyCounter++;
         }
 
-        $sql = 'SELECT * FROM '.Manager::getInstance()->getDb()->quoteIdentifier($this->tableName, true) . (count($conditions) ?' WHERE ' . join(' AND ', $conditions) : '') . $groupBy . $orderBy . $limit;
+        $sql = 'SELECT * FROM '.Manager::getInstance()->getDb()->quoteIdentifier($this->tableName) . (count($conditions) ?' WHERE ' . join(' AND ', $conditions) : '') . $groupBy . $orderBy . $limit;
 
         return $sql;
     }
@@ -797,7 +808,7 @@ abstract class Mapper
      * Returns result set by means of which Entity will be generated
      *
      * @param array $params
-     * @return Array
+     * @return array
      */
     protected function fetchArrayFromDB(array $params)
     {

@@ -4,6 +4,7 @@ namespace SFM\Database;
 use SFM\Transaction\TransactionException;
 use Zend\Db\Adapter\Adapter;
 use Zend\Db\Adapter\AdapterInterface;
+use Zend\Db\Adapter\Driver\Pgsql\Pgsql;
 use Zend\Db\ResultSet\ResultSet;
 use Zend\Db\Adapter\Exception\ExceptionInterface;
 use SFM\Transaction\TransactionEngineInterface;
@@ -81,7 +82,7 @@ class DatabaseProvider implements TransactionEngineInterface
      *
      * @param string $sql
      * @param array $vars
-     * @return Array
+     * @return array
      */
     public function fetchLine($sql, array $vars=array())
     {
@@ -148,17 +149,33 @@ class DatabaseProvider implements TransactionEngineInterface
      * @param $vars
      * @param string $idFieldName
      * @param bool $isIdAutoincrement
+     * @param string $tableName
      * @return string
      */
-    public function insert($sql, $vars, $idFieldName = 'id', $isIdAutoincrement = true)
+    public function insert($sql, $vars, $idFieldName = 'id', $isIdAutoincrement = true, $tableName = '')
     {
         $this->query($sql, $vars);
 
-        if($isIdAutoincrement){
-            return $this->adapter->getDriver()->getLastGeneratedValue();
+        $seqName = null;
+        if ($this->adapter->getDriver() instanceof Pgsql) {
+            $seqName = $this->getPgSeqName($tableName, $idFieldName);
+        }
+
+        if ($isIdAutoincrement) {
+            return $this->adapter->getDriver()->getLastGeneratedValue($seqName);
         } else {
             return $vars[$idFieldName];
         }
+    }
+
+    /**
+     * @param string $tableName
+     * @param string $idFieldName
+     * @return string
+     */
+    protected function getPgSeqName($tableName, $idFieldName)
+    {
+        return $tableName . '_' . $idFieldName . '_' . 'seq';
     }
     
     public function delete($sql, $vars)
