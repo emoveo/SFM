@@ -1,4 +1,5 @@
 <?php
+
 namespace SFM\Console;
 
 use Composer\Script\Event;
@@ -15,14 +16,14 @@ class CreateEntityCommand
 
     public static function run(Event $event)
     {
-        $tableValidator = function($value) {
+        $tableValidator = function ($value) {
             if ('' === trim($value) || preg_match("/^\\w+(?:\\.\\w+)?$/", $value) === 0) {
                 throw new \RuntimeException("Для создания сущности требуется имя базовой таблицы `table`");
             }
             return $value;
         };
 
-        $classValidator = function($value) {
+        $classValidator = function ($value) {
             if ('' === trim($value) || preg_match("/^[a-zA-Z_]+$/", $value) === 0) {
                 throw new \RuntimeException("Для создания сущности требуется имя класса");
             }
@@ -32,7 +33,7 @@ class CreateEntityCommand
         $table = $event->getIO()->askAndValidate("Для создания сущности требуется имя базовой таблицы `table`: ", $tableValidator);
 
         $class = str_replace(" ", "_", ucwords(str_replace("_", " ", $table)));
-        $class = $event->getIO()->askAndValidate("Для создания сущности требуется имя класса: ", $classValidator, false, $class);
+        $class = $event->getIO()->askAndValidate("Для создания сущности требуется имя класса: ", $classValidator, null, $class);
 
         $scaffolds = array(
             new MapperScaffold($table, $class),
@@ -41,7 +42,6 @@ class CreateEntityCommand
             new CriteriaScaffold($table, $class),
             new QueryBuilderScaffold($table, $class)
         );
-
 
 
         /** @var $scaffold ScaffoldInterface */
