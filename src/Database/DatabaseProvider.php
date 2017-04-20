@@ -16,7 +16,7 @@ class DatabaseProvider implements TransactionEngineInterface
      * @var Adapter
      */
     protected $adapter = null;
-    
+
     /**
      * Current transaction status
      * @var bool
@@ -30,7 +30,7 @@ class DatabaseProvider implements TransactionEngineInterface
     {
         $this->adapter = $adapter;
     }
-    
+
     /**
      *  @return Adapter
      */
@@ -149,35 +149,62 @@ class DatabaseProvider implements TransactionEngineInterface
      * @param $vars
      * @param string $idFieldName
      * @param bool $isIdAutoincrement
-     * @param string $tableName
-     * @return string
+     * @return int
      */
-    public function insert($sql, $vars, $idFieldName = 'id', $isIdAutoincrement = true, $tableName = '')
+    public function insert($sql, $vars, $idFieldName = 'id', $isIdAutoincrement = true)
     {
         $this->query($sql, $vars);
 
         $seqName = null;
         if ($this->adapter->getDriver() instanceof Pgsql) {
-            $seqName = $this->getPgSeqName($tableName, $idFieldName);
+            $seqName = $this->getPgSeqName($sql, $idFieldName);
         }
 
         if ($isIdAutoincrement) {
-            return $this->adapter->getDriver()->getLastGeneratedValue($seqName);
+            return (int) $this->adapter->getDriver()->getLastGeneratedValue($seqName);
         } else {
-            return $vars[$idFieldName];
+            return (int) $vars[$idFieldName];
         }
     }
 
     /**
-     * @param string $tableName
+     * @param string $sql
      * @param string $idFieldName
-     * @return string
+     * @return string|null
      */
-    protected function getPgSeqName($tableName, $idFieldName)
+    protected function getPgSeqName($sql, $idFieldName)
     {
-        return $tableName . '_' . $idFieldName . '_' . 'seq';
+        $name = $this->getTableName($sql);
+        if (!$name) {
+            return null;
+        }
+        return $name . '_' . $idFieldName . '_' . 'seq';
     }
-    
+
+    /**
+     * @param $sql
+     * @return string|null
+     */
+    protected function getTableName($sql)
+    {
+        $splitSQL = explode(' ', $sql);
+        $result = null;
+        for ($i = 0; $i < count($splitSQL); $i++)
+        {
+            if (strtolower($splitSQL[$i]) === 'insert')
+            {
+                if (strtolower($splitSQL[$i+1]) === 'into')
+                {
+                    $result = $splitSQL[$i+2];
+                    break;
+                }
+            }
+        }
+        $name = str_replace(['"', "'", '\\'], "", $result);
+
+        return $name;
+    }
+
     public function delete($sql, $vars)
     {
         $stmt = $this->query($sql, $vars);
@@ -210,7 +237,7 @@ class DatabaseProvider implements TransactionEngineInterface
     {
         return $this->isTransactionActive;
     }
-    
+
     /**
      * @throws TransactionException
      */
