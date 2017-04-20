@@ -7,7 +7,7 @@ class QueryBuilderScaffold extends ScaffoldAbstract
     {
         $scaffold = <<<EOD
 <?php
-class {$this->queryBuilderClass} extends \QueryBuilder\AbstractQueryBuilder
+class {$this->queryBuilderClass} extends \SFM\QueryBuilder\AbstractQueryBuilder
 {
     protected \$conditions = array();
     protected \$sql = "SELECT id FROM {$this->table}";
