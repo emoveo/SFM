@@ -5,7 +5,7 @@ abstract class AbstractQueryBuilder
 {
     protected $criteria;
     protected $sql = null;
-    protected $vars = array();
+    protected $params = array();
 
     /**
      * @return string
@@ -22,13 +22,13 @@ abstract class AbstractQueryBuilder
     /**
      * @return array
      */
-    public function getVars()
+    public function getParams()
     {
         if (null === $this->sql) {
             $this->setup();
         }
 
-        return $this->vars;
+        return $this->params;
     }
 
     abstract protected function setup();
