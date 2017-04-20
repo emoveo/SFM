@@ -7,19 +7,22 @@ class QueryBuilderScaffold extends ScaffoldAbstract
     {
         $scaffold = <<<EOD
 <?php
+
 class {$this->queryBuilderClass} extends \SFM\QueryBuilder\AbstractQueryBuilder
 {
-    protected \$conditions = array();
-    protected \$sql = "SELECT id FROM {$this->table}";
+    protected \$conditions = [];
 
     public function __construct({$this->criteriaClass} \$criteria)
     {
-
-        if (\$this->sql && \$this->conditions) {
+        \$this->criteria = \$criteria;
+    }
+    
+    protected function setup()
+    {
+        \$this->sql = "SELECT id FROM {$this->table}";
+        if (\$this->conditions) {
             \$this->sql .= ' WHERE ' . implode(' AND ', \$this->conditions);
         }
-
-        parent::__construct(\$criteria);
     }
 }
 

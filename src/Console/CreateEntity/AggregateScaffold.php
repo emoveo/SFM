@@ -8,7 +8,7 @@ class AggregateScaffold extends ScaffoldAbstract
         $scaffold = <<<EOD
 <?php
 /**
- * @method {$this->aggregateClass} filter() filter(array \$matches = array(), array \$disagrees = array())
+ * @method {$this->aggregateClass} filter() filter(array \$matches = [], array \$disagrees = [])
  * @method static {$this->aggregateClass} combine() combine({$this->mapperClass} \$mapper, array \$aggregates, \$cacheKey = null)
  * @method {$this->aggregateClass} recircle() recircle(\$offset)
  * @method {$this->entityClass} current() current()
