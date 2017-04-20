@@ -2,6 +2,7 @@
 namespace SFM;
 
 use SFM\Cache\CacheProvider;
+use Zend\Db\Adapter\Driver\Pgsql\Pgsql;
 
 /**
  * Abstract class for Data Mapping
@@ -268,7 +269,22 @@ abstract class Mapper
         return $entity;
     }
 
+    /**
+     * Return appropriate prepared statement
+     *
+     * @param $keyName
+     * @param $keyCounter
+     * @return string
+     */
+    protected function getPreparedParam($keyName, $keyCounter)
+    {
+        $driver = Manager::getInstance()->getDb()->getAdapter()->getDriver();
+        if ($driver instanceof Pgsql) {
+            return '$' . $keyCounter;
+        }
 
+        return ':' . $keyName;
+    }
 
     /**
      * Updates Entity in Database
@@ -296,12 +312,12 @@ abstract class Mapper
         $keyCounter = 1;
         foreach ($params as $key => $value) {
             $field = Manager::getInstance()->getDb()->quoteIdentifier($key);
-            $updates []= "{$field}=\${$keyCounter}";
+            $updates[]= "{$field}=" . $this->getPreparedParam($key, $keyCounter);
             $keyCounter++;
         }
 
         $params[$this->idField] = $entity->getInfo($this->idField);
-        $sql = "UPDATE ".Manager::getInstance()->getDb()->quoteIdentifier($this->tableName)." SET " . implode(',', $updates) . " WHERE {$this->idField}=\${$keyCounter}";
+        $sql = "UPDATE ".Manager::getInstance()->getDb()->quoteIdentifier($this->tableName)." SET " . implode(',', $updates) . " WHERE {$this->idField}=" . $this->getPreparedParam($this->idField, $keyCounter);
 
         $state = Manager::getInstance()->getDb()->update($sql, $params);
 
@@ -393,7 +409,7 @@ abstract class Mapper
         //Then delete from DB
         $tableName = Manager::getInstance()->getDb()->quoteIdentifier($this->tableName);
 
-        $sql = "DELETE FROM {$tableName} WHERE {$this->idField}=\$1";
+        $sql = "DELETE FROM {$tableName} WHERE {$this->idField}=" . $this->getPreparedParam($this->idField, 1);
         return Manager::getInstance()->getDb()->delete($sql, array($this->idField => $entity->getInfo($this->idField)));
     }
 
@@ -414,7 +430,7 @@ abstract class Mapper
         $keyCounter = 1;
         foreach ($proto as $key => $value) {
             $keys[] = Manager::getInstance()->getDb()->quoteIdentifier($key);
-            $values[] = '$' . $keyCounter;
+            $values[] = $this->getPreparedParam($key, $keyCounter);
             $keyCounter++;
         }
 
@@ -566,11 +582,11 @@ abstract class Mapper
         if( sizeof($entityId) == 0 || null == $entityId) {
             return array();
         }
-        
+
         //from identity map
         $cachedIdentityMapVals = $this->getEntityMultiFromIdentityMap($this->entityClassName,$entityId);
         $entityId = array_diff($entityId,array_keys($cachedIdentityMapVals));
-        
+
         $memcachedVals = Manager::getInstance()->getCache()->getMulti( $this->getEntitiesCacheKeyByListId($entityId) );
         $cachedVals = $cachedIdentityMapVals;
         if($memcachedVals){
@@ -619,7 +635,7 @@ abstract class Mapper
                 $sql.= ', '.implode(', ',$calculated);
             $sql.= ' FROM '.Manager::getInstance()->getDb()->quoteIdentifier($this->tableName).' WHERE '. $this->getIdField() .' IN ('. implode(",",$entityId) .')';
             $data = Manager::getInstance()->getDb()->fetchAll($sql);
-            
+
             foreach ($data as $row) {
                 $result[] = $this->createEntity($row);
             }
@@ -788,14 +804,14 @@ abstract class Mapper
         if (isset($params[self::SQL_PARAM_CONDITION])) {
             $pConditions = (array) $params[self::SQL_PARAM_CONDITION];
             foreach ($pConditions as $pCond) {
-                $conditions[]= $pCond;
+                $conditions[] = $pCond;
             }
             unset($params[self::SQL_PARAM_CONDITION]);
         }
 
         $keyCounter = 1;
         foreach ($params as $key => $value) {
-            $conditions []= $quoteSymbol."{$key}".$quoteSymbol." = \${$keyCounter}";
+            $conditions[] = $quoteSymbol . "{$key}" . $quoteSymbol . " = "  . $this->getPreparedParam($key, $keyCounter);
             $keyCounter++;
         }
 
@@ -832,9 +848,9 @@ abstract class Mapper
     {
         return Manager::getInstance()->getIdentityMap()->getEntity($className, $id);
     }
-    
+
     /**
-     * 
+     *
      *
      * @param string $className
      * @param array $ids
