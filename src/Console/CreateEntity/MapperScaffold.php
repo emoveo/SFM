@@ -26,6 +26,12 @@ class {$this->mapperClass} extends \SFM\Mapper
         \$builder = new {$this->queryBuilderClass}(\$criteria);
         \$aggregate = \$this->getAggregateBySQL(\$builder->getSQL(), \$builder->getParams());
 
+        if(\$criteria->getPage()) {
+           \$aggregate->loadEntitiesForCurrentPage(\$criteria->getPage(),\$criteria->getPerPage());
+        } else {
+           \$aggregate->loadEntities();
+        }
+
         return \$aggregate;
     }
 }
