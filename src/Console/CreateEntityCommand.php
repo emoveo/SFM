@@ -24,7 +24,7 @@ class CreateEntityCommand
         };
 
         $classValidator = function ($value) {
-            if ('' === trim($value) || preg_match("/^[a-zA-Z_]+$/", $value) === 0) {
+            if ('' === trim($value) || preg_match("/^[a-zA-Z_][a-zA-Z_0-9]*$/", $value) === 0) {
                 throw new \RuntimeException("Для создания сущности требуется имя класса");
             }
             return $value;

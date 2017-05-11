@@ -200,6 +200,7 @@ class DatabaseProvider implements TransactionEngineInterface
                 }
             }
         }
+        $result = explode('(', $result)[0];
         $name = str_replace(['"', "'", '\\'], "", $result);
 
         return $name;
