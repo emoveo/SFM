@@ -14,8 +14,8 @@ abstract class AbstractQueryBuilder
     {
         if (null === $this->sql) {
             $this->setup();
-            $this->prepareParams();
         }
+        $this->prepareParams();
 
         return $this->sql;
     }
@@ -27,8 +27,8 @@ abstract class AbstractQueryBuilder
     {
         if (null === $this->sql) {
             $this->setup();
-            $this->prepareParams();
         }
+        $this->prepareParams();
 
         return $this->params;
     }
