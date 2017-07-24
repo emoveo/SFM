@@ -207,6 +207,23 @@ class IdentityMap implements IdentityMapInterface, TransactionEngineInterface
             throw new TransactionException('Transaction already stopped');
         }
 
+	// remove all data that was changed during transaction from storage
+        /** @var string $className */
+        foreach ($this->transactionRemoveStorage->getClassNames() as $className) {
+            /** @var Entity $entity */
+            foreach ($this->transactionRemoveStorage->getM($className) as $entity) {
+                $this->storage->remove($className, $entity->getId());
+            }
+        }
+
+        /** @var string $className */
+        foreach ($this->transactionAddStorage->getClassNames() as $className) {
+            /** @var Entity $entity */
+            foreach ($this->transactionAddStorage->getM($className) as $entity) {
+                $this->storage->remove($className, $entity->getId());
+            }
+        }
+
         $this->transactionAddStorage->flush();
         $this->transactionRemoveStorage->flush();
 
