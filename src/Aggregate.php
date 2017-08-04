@@ -130,11 +130,11 @@ abstract class Aggregate extends Business implements \Iterator, \Countable
     {
         /* changed by A-25. It is more correct (no notices) */
         if (empty($this->entities))
-            return false;
+            return null;
 
         $current = current($this->loadedListEntityId);
         if ($current === false)
-            return false;
+            return null;
 
         return $this->entities[$current];
         //return empty($this->loadedListEntityId) ? false : $this->entities[ current($this->loadedListEntityId) ];   
