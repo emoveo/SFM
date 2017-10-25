@@ -585,7 +585,19 @@ abstract class Mapper
 
         //from identity map
         $cachedIdentityMapVals = $this->getEntityMultiFromIdentityMap($this->entityClassName,$entityId);
-        $entityId = array_diff($entityId,array_keys($cachedIdentityMapVals));
+
+        // -- fix for
+        // $entityId = array_diff($entityId,array_keys($cachedIdentityMapVals));
+        // because getEntityMultiFromIdentityMap returns array where keys just sequence value, but not entities ids
+        if (!empty($cachedIdentityMapVals)) {
+            // collect all entity ids in array
+            $cachedIdentityMapIds = array();
+            foreach ($cachedIdentityMapVals as $cachedIdentityMapEntity) {
+                $cachedIdentityMapIds[] = $cachedIdentityMapEntity->getId();
+            }
+            $entityId = array_diff($entityId, $cachedIdentityMapIds);
+        }
+        // --
 
         $memcachedVals = Manager::getInstance()->getCache()->getMulti( $this->getEntitiesCacheKeyByListId($entityId) );
         $cachedVals = $cachedIdentityMapVals;
