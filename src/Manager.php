@@ -49,7 +49,8 @@ class Manager extends Container
                         'database' => $this->getConfigDb()->getDb(),
                         'username' => $this->getConfigDb()->getUser(),
                         'password' => $this->getConfigDb()->getPass(),
-                        'hostname' => $this->getConfigDb()->getHost()
+                        'hostname' => $this->getConfigDb()->getHost(),
+                        'port' => $this->getConfigDb()->getPort(),
                     ));
 
                     if (is_array($this->getConfigDb()->getInitialQueries())) {

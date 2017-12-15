@@ -5,6 +5,7 @@ class Config
 {
     protected $driver;
     protected $host;
+    protected $port;
     protected $user;
     protected $pass;
     protected $db;
@@ -65,6 +66,25 @@ class Config
     public function getHost()
     {
         return $this->host;
+    }
+
+    /**
+     * @return string
+     */
+    public function getPort()
+    {
+        return $this->port;
+    }
+
+    /**
+     * @param string $port
+     * @return $this
+     */
+    public function setPort($port)
+    {
+        $this->port = $port;
+
+        return $this;
     }
 
     /**
