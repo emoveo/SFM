@@ -22,6 +22,10 @@ class SfmServiceProvider implements ServiceProviderInterface
                       ->setDb($app["sfm.db"]["database"])
                       ->setDriver($app["sfm.db"]["driver"]);
 
+            if(isset($app["sfm.db"]["port"])) {
+                $sqlConfig->setPort($app["sfm.db"]["port"]);
+            }
+
             if (isset($app['sfm.db']['queries']) && is_array($app['sfm.db']['queries'])) {
                 $sqlConfig->setInitialQueries($app['sfm.db']['queries']);
             }
