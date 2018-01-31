@@ -56,7 +56,7 @@ abstract class Entity extends Business
      */
     public function getInfo($fieldName = null)
     {
-        assert('$fieldName !== "proto"');
+        assert($fieldName !== "proto");
         
         // all fields
         if ($fieldName === null) {
